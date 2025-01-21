@@ -6,7 +6,8 @@
 
 ## Step 1: Static Web Site
 
-The goal of this step was to create a Docker container running Nginx to serve a static website. Below are the configuration files and the steps taken to achieve this.
+The goal of this step was to create a Docker container running Nginx to serve a static website.
+Below are the configuration files and the steps taken to achieve this.
 
 ### Configuration of `nginx.conf`:
 ```nginx
@@ -56,37 +57,46 @@ To test it:
 
 ### Website Description:
 
-The static website is built using a free template from Start Bootstrap. It includes a landing page with placeholders for images and text, designed for a clean and modern appearance.
+The static website is built using a free template from Start Bootstrap.
+It includes a landing page with placeholders for images and text, designed for a clean and modern appearance.
 
 ---
+## Step 2: Docker Compose
 
-## Step 2 : Docker Compose
+To simplify the deployment of the static web server, we used Docker Compose.
+Below are the configurations and instructions.
 
-### Configuration of `docker-compose.yml` :
-```bash
+### Configuration of `docker-compose.yml`:
+```yaml
 services:
   static-web:
     build:
-      context: ./
+      context: ./static-website
     ports:
       - "8080:80"
     container_name: static-website
 ```
-To build it and start it for the first time : 
+
+### How to run the Docker Compose:
+1. **Build and start the service**:
 ```bash
-docker compose up --build
+docker-compose up --build
 ```
-To stop it : 
+
+2. **Stop the service**:
 ```bash
-docker compose down
+docker-compose down
 ```
-To start it again : 
+
+3. **Test the server**:
+Open your web browser and navigate to [http://localhost:8080](http://localhost:8080)
+to verify that the static website is running.
+
+### Validation:
+- The static website was accessible at `http://localhost:8080`.
+- Changes in the website content can be easily integrated by rebuilding the Docker image using:
 ```bash
-docker compose up
-```
-To rebuild it after change : 
-```bash
-docker compose build
+docker-compose build
 ```
 
 ---
