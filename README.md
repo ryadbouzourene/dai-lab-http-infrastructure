@@ -60,5 +60,37 @@ The static website is built using a free template from Start Bootstrap. It inclu
 
 ---
 
-## Step 2: Docker Compose
+## Step 2 : Docker Compose
+
+### Configuration of `docker-compose.yml` :
+```bash
+services:
+  static-web:
+    build:
+      context: ./
+    ports:
+      - "8080:80"
+    container_name: static-website
+```
+To build it and start it for the first time : 
+```bash
+docker compose up --build
+```
+To stop it : 
+```bash
+docker compose down
+```
+To start it again : 
+```bash
+docker compose up
+```
+To rebuild it after change : 
+```bash
+docker compose build
+```
+
+---
+
+## Step 3 : HTTP API server
+
 
