@@ -1,4 +1,4 @@
-# Rapport à compléter
+# Rapport DAI
 
 ## Step 1
 
@@ -34,3 +34,45 @@ Nous avons organisé le projet comme suit :
 ### Validation
 
 Nous avons construit et lancé l'image Docker. Une fois en cours d'exécution, le serveur est accessible via un navigateur à l'adresse `http://localhost:NUMPORT`.
+
+## Step 2: Docker Compose
+
+To simplify the deployment of the static web server, we used Docker Compose.
+Below are the configurations and instructions.
+
+### Configuration of `docker-compose.yml`:
+```yaml
+services:
+  static-web:
+    build:
+      context: ./static-website
+    ports:
+      - "8080:80"
+    container_name: static-website
+```
+
+### How to run the Docker Compose:
+1. **Build and start the service**:
+```bash
+docker-compose up --build
+```
+
+2. **Stop the service**:
+```bash
+docker-compose down
+```
+
+3. **Test the server**:
+Open your web browser and navigate to [http://localhost:8080](http://localhost:8080)
+to verify that the static website is running.
+
+### Validation:
+- The static website was accessible at `http://localhost:8080`.
+- Changes in the website content can be easily integrated by rebuilding the Docker image using:
+```bash
+docker-compose build
+```
+
+---
+
+## Step 3 : HTTP API server

@@ -1,0 +1,7 @@
+services:
+  static-web:
+    build:
+      context: ./static-website
+    ports:
+      - "8080:80"
+    container_name: static-website
