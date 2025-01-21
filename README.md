@@ -1,66 +1,40 @@
-# Report - DAI Project - Dietary Monitoring
+# Rapport DAI
 
-### Authors: Ryad Bouzourène, Anthony Christen, Louis Haye
+## Step 1
 
----
+Pour cette partie, nous avons utilisé un template de site Web statique nommé Medi-Plus. Ce template a été récupéré gratuitement sur une plateforme de partage de templates tels que Free-CSS. Il s'agit d'un site à page unique avec un design attractif, adapté à des sites médicaux ou similaires.
 
-## Step 1: Static Web Site
+### Objectifs
 
-The goal of this step was to create a Docker container running Nginx to serve a static website.
-Below are the configuration files and the steps taken to achieve this.
+L'objectif principal était de construire une image Docker contenant un serveur HTTP statique basé sur Nginx, qui sert le contenu de ce site. Voici les étapes et configurations réalisées :
 
-### Configuration of `nginx.conf`:
-```nginx
-http {
-    include /etc/nginx/mime.types;
+### Organisation du projet
 
-    server {
-        listen 80;
-        server_name localhost;
+Nous avons organisé le projet comme suit :
+- Un dossier `src` contenant tous les fichiers du site Web statique (HTML, CSS, JS, images, etc.).
+- Un fichier `Dockerfile` pour créer l'image Docker.
+- Un fichier `nginx.conf` configurant le serveur Nginx.
 
-        location / {
-            root /usr/share/nginx/html;
-            index index.html;
-        }
+### Contenu des fichiers de configuration
 
-        error_page 404 /404.html;
-    }
-}
-```
+1. **nginx.conf** :  
+   La configuration du serveur est simple et vise à servir le contenu statique à partir de la racine `/usr/share/nginx/html`. Voici les détails :
+   - `worker_connections 1024` : Configure le nombre maximum de connexions simultanées par worker.
+   - `include /etc/nginx/mime.types` : Permet de définir les types MIME pour les fichiers.
+   - `root /usr/share/nginx/html` : Définit la racine où sont stockés les fichiers statiques.
+   - `index index.html` : Spécifie le fichier à charger par défaut.
+   - `error_page 404 /404.html` : Définit une page d'erreur personnalisée pour les 404.
 
-### Configuration of `Dockerfile`:
-```dockerfile
-FROM nginx:latest
+2. **Dockerfile** :  
+   Nous avons utilisé l'image officielle `nginx:latest` comme base. Voici les principales instructions :
+   - `COPY src /usr/share/nginx/html` : Copie les fichiers du site dans le dossier prévu pour Nginx.
+   - `COPY nginx.conf /etc/nginx/nginx.conf` : Remplace la configuration par défaut de Nginx par notre configuration personnalisée.
+   - `EXPOSE 80` : Expose le port 80 pour que le serveur soit accessible.
 
-COPY src /usr/share/nginx/html
+### Validation
 
-COPY nginx.conf /etc/nginx/nginx.conf
+Nous avons construit et lancé l'image Docker. Une fois en cours d'exécution, le serveur est accessible via un navigateur à l'adresse `http://localhost:NUMPORT`.
 
-EXPOSE 80
-```
-
-### How to run the Docker:
-To build the Docker image:
-```bash
-docker build -t static-website:latest .
-```
-
-To run it on port 8080:
-```bash
-docker run -d -p 8080:80 static-website:latest
-```
-
-To test it:
-1. Open your web browser and go to [http://localhost:8080](http://localhost:8080).
-2. Verify that the website loads correctly.
-3. Test the 404 page by navigating to a non-existent URL (e.g., `http://localhost:8080/hello`).
-
-### Website Description:
-
-The static website is built using a free template from Start Bootstrap.
-It includes a landing page with placeholders for images and text, designed for a clean and modern appearance.
-
----
 ## Step 2: Docker Compose
 
 To simplify the deployment of the static web server, we used Docker Compose.
@@ -102,5 +76,3 @@ docker-compose build
 ---
 
 ## Step 3 : HTTP API server
-
-
