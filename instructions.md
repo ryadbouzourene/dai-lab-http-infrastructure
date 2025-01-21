@@ -65,7 +65,7 @@ The goal of this step is to build a Docker image that contains a static HTTP ser
 - [X] You have configured the `nginx.conf` configuration file to serve the static content on a port (normally 80).
 - [X] You are able to explain the content of the `nginx.conf` file.
 - [X] You can run the image and access the static content from a browser.
-- [ ] You have **documented** your configuration in your report.
+- [X] You have **documented** your configuration in your report.
 
 
 Step 2: Docker compose
