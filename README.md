@@ -68,7 +68,7 @@ pour vérifier que le site web statique est en cours.
 
 ### Validation:
 - Le site web statique est à accessible à l'adresse `http://localhost:8080`.
-- On peut facilement effectuer des changement sur le site web et reconstruisant l'image Docker en utilisant: 
+- On peut facilement effectuer des changement sur le site web et reconstruire l'image Docker en utilisant: 
 ```bash
 docker-compose build
 ```
