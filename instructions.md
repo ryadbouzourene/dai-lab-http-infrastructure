@@ -30,7 +30,7 @@ In addition to the basic requirement of service static and dynamic content, the 
 General instructions
 --------------------
 
-- This is a **BIG** lab and you will need a lot of time to complete it. 
+- This is a **BIG** lab and you will need a lot of time to complete it.
 - You will work in **groups of 2 students** and use a Git workflow to collaborate.
 - For certain steps you will need to do research in the documentation by yourself (we are here to help, but we will not give you step-by-step instructions!) or you will need to be creative (do not expect complete guidelines).
 - Read carefully all the **acceptance criteria** of each step. They will tell you what you need to do to complete the step.
@@ -42,7 +42,7 @@ General instructions
 Step 0: GitHub repository
 -------------------------
 
-Create a GitHub repository for your project. You will use this repository to collaborate with your team mate. You will also use it to submit your work. 
+Create a GitHub repository for your project. You will use this repository to collaborate with your team mate. You will also use it to submit your work.
 
 > [!IMPORTANT]
 > Be careful to keep a clear structure of the repository such that the different components are clearly separated.
@@ -95,7 +95,7 @@ This step requires a more work. The goal is to build a HTTP API with Javalin. Yo
 
 Use your imagination and be creative!
 
-The only requirement is that the API supports at all CRUD operations, i.e.: Create, Read, Update, Delete. 
+The only requirement is that the API supports at all CRUD operations, i.e.: Create, Read, Update, Delete.
 
 Use a API testing tool such as Insomnia, Hoppscotch or Bruno to test all these operations.
 
@@ -106,18 +106,18 @@ Once you're finished with the implementation, create a Dockerfile for the API se
 ### Acceptance criteria
 
 - [ ] Your API supports all CRUD operations.
-- [ ] You are able to explain your implementation and walk us through the code.
-- [ ] You can start and stop the API server using docker compose.
-- [ ] You can access both the API and the static server from your browser.
-- [ ] You can rebuild the docker image with docker compose.
-- [ ] You can do demo where use an API testing tool to show that all CRUD operations work.
+- [X] You are able to explain your implementation and walk us through the code.
+- [X] You can start and stop the API server using docker compose.
+- [X] You can access both the API and the static server from your browser.
+- [X] You can rebuild the docker image with docker compose.
+- [X] You can do demo where use an API testing tool to show that all CRUD operations work.
 - [ ] You have **documented** your implementation in your report.
 
 
 Step 4: Reverse proxy with Traefik
 ----------------------------------
 
-The goal of this step is to place a reverse proxy in front of the dynamic and static Web servers such that the reverse proxy receives all connections and relays them to the respective Web server. 
+The goal of this step is to place a reverse proxy in front of the dynamic and static Web servers such that the reverse proxy receives all connections and relays them to the respective Web server.
 
 You will use [Traefik](https://traefik.io/traefik/) as a reverse proxy. Traefik interfaces directly with Docker to obtain the list of active backend servers. This means that it can dynamically adjust to the number of running server. Traefik has the particularity that it can be configured using labels in the docker compose file. This means that you do not need to write a configuration file for Traefik, but Traefik will read container configurations from the docker engine through the file `/var/run/docker.sock`.
 
@@ -128,7 +128,7 @@ The steps to follow for this section are thus:
 - Read the [Traefik & Docker](https://doc.traefik.io/traefik/routing/providers/docker/) documentation to learn how to configure Traefik to work with Docker.
 - Then implement the reverse proxy:
   - relay the requests coming to "localhost" to the static HTTP server
-  - relay the requests coming to "localhost/api" to the API server. See the [Traefik router documentation](https://doc.traefik.io/traefik/routing/routers/) for managing routes based on path prefixes. 
+  - relay the requests coming to "localhost/api" to the API server. See the [Traefik router documentation](https://doc.traefik.io/traefik/routing/routers/) for managing routes based on path prefixes.
   - you will have to remove the `ports` configuration from the static and dynamic server in the docker compose file and replace them with `expose` configuration. Traefik will then be able to access the servers through the internal Docker network.
 - You can use the [Traefik dashboard](https://doc.traefik.io/traefik/operations/dashboard/) to monitor the state of the reverse proxy.
 
@@ -207,7 +207,7 @@ Once you got the two files (certificate and key), you can place them into a fold
 
 ### Traefik configuration file
 
-Up to now, you've configured Traefik through labels directely in the docker compose file. However, it is not possible to specify the location of the certificates to Traefik with labels. You have to create a configuration file `traefik.yaml`. 
+Up to now, you've configured Traefik through labels directely in the docker compose file. However, it is not possible to specify the location of the certificates to Traefik with labels. You have to create a configuration file `traefik.yaml`.
 
 Again, you have to mount this file into the Traefik container as a volume, at the location `/etc/traefik/traefik.yaml`.
 
@@ -243,7 +243,7 @@ If it does not work, go to the Traefik dashboard and check the configuration of 
 Optional steps
 ==============
 
-If you sucessfully complete all the steps above, you can reach a grade of 5.0. If you want to reach a higher grade, you can do one or more of the following optional steps. 
+If you sucessfully complete all the steps above, you can reach a grade of 5.0. If you want to reach a higher grade, you can do one or more of the following optional steps.
 
 Optional step 1: Management UI
 ------------------------------
