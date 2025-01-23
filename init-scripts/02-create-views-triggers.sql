@@ -1,5 +1,6 @@
---VIEWS--
+SET search_path TO suivi_dietetique, public;
 
+--VIEWS--
 -- vue de la table patient
 CREATE OR REPLACE VIEW suivi_dietetique.personne_vue AS
 SELECT personne.noss,
