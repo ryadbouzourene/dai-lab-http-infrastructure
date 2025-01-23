@@ -1,6 +1,7 @@
 # Rapport DAI
+### Auteurs : Ryad Bouzourène, Anthony Christen, Louis Haye
 
-## Step 1
+## Etape 1: Site web statique
 
 Pour cette partie, nous avons utilisé un template de site Web statique nommé Medi-Plus. Ce template a été récupéré gratuitement sur une plateforme de partage de templates tels que Free-CSS. Il s'agit d'un site à page unique avec un design attractif, adapté à des sites médicaux ou similaires.
 
@@ -35,12 +36,11 @@ Nous avons organisé le projet comme suit :
 
 Nous avons construit et lancé l'image Docker. Une fois en cours d'exécution, le serveur est accessible via un navigateur à l'adresse `http://localhost:NUMPORT`.
 
-## Step 2: Docker Compose
+## Etape 2: Docker Compose
 
-To simplify the deployment of the static web server, we used Docker Compose.
-Below are the configurations and instructions.
+Pour simplifier de déploiement de notre serveur web statique, nous avons utilisé Docker Compose.
 
-### Configuration of `docker-compose.yml`:
+### Configuration du `docker-compose.yml`:
 ```yaml
 services:
   static-web:
@@ -51,28 +51,28 @@ services:
     container_name: static-website
 ```
 
-### How to run the Docker Compose:
-1. **Build and start the service**:
+### Comment lancer le Docker Compose:
+1. **Construire et lancer le service**:
 ```bash
 docker-compose up --build
 ```
 
-2. **Stop the service**:
+2. **Arrêter le service**:
 ```bash
 docker-compose down
 ```
 
-3. **Test the server**:
-Open your web browser and navigate to [http://localhost:8080](http://localhost:8080)
-to verify that the static website is running.
+3. **Tester le serveur**:
+Ouvrir son navigateur internet et aller à l'adresse [http://localhost:8080](http://localhost:8080)
+pour vérifier que le site web statique est en cours.
 
 ### Validation:
-- The static website was accessible at `http://localhost:8080`.
-- Changes in the website content can be easily integrated by rebuilding the Docker image using:
+- Le site web statique est à accessible à l'adresse `http://localhost:8080`.
+- On peut facilement effectuer des changement sur le site web et reconstruisant l'image Docker en utilisant: 
 ```bash
 docker-compose build
 ```
 
 ---
 
-## Step 3 : HTTP API server
+## Etape 3 : API Serveur HTTP
