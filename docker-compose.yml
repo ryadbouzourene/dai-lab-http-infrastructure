@@ -1,3 +1,7 @@
+networks:
+  bdr-net:
+    driver: bridge
+
 services:
   static-web:
     build:
@@ -5,3 +9,29 @@ services:
     ports:
       - "8080:80"
     container_name: static-website
+
+  api-server:
+    build:
+      context: ./api-server
+    ports:
+      - "7070:80"
+    depends_on:
+      - postgresql
+    networks:
+      - bdr-net
+
+  postgresql:
+    image: 'bitnami/postgresql:17'
+    container_name: bdr-postgresql
+    environment:
+      - POSTGRESQL_USERNAME=bdr
+      - POSTGRESQL_PASSWORD=bdr
+      - POSTGRESQL_DATABASE=bdr
+      - POSTGRESQL_POSTGRES_PASSWORD=root
+    ports:
+      - 5432:5432
+    volumes:
+      - .:/data:ro
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - bdr-net
