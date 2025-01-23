@@ -1,7 +1,7 @@
 --VIEWS--
 
 -- vue de la table patient
-CREATE OR REPLACE VIEW personne_vue AS
+CREATE OR REPLACE VIEW suivi_dietetique.personne_vue AS
 SELECT personne.noss,
        nom,
        prenom,
@@ -12,7 +12,7 @@ FROM personne
          LEFT JOIN utilisateur
                    ON utilisateur.noss = personne.noss;
 
-CREATE OR REPLACE VIEW patient_vue AS
+CREATE OR REPLACE VIEW suivi_dietetique.patient_vue AS
 SELECT patient.noss,
        nom,
        prenom,
@@ -27,7 +27,7 @@ FROM patient
 
 
 -- vue de la table employé
-CREATE OR REPLACE VIEW employe_vue AS
+CREATE OR REPLACE VIEW suivi_dietetique.employe_vue AS
 SELECT personne_vue.noss,
        personne_vue.nom,
        personne_vue.prenom,
@@ -45,7 +45,7 @@ FROM suivi_dietetique.employe
                     ON employe.id_service = service.id;
 
 -- vue de la table infirmier
-CREATE OR REPLACE VIEW infirmier_vue AS
+CREATE OR REPLACE VIEW suivi_dietetique.infirmier_vue AS
 SELECT ev.noss,
        ev.nom,
        ev.prenom,
@@ -62,7 +62,7 @@ FROM suivi_dietetique.infirmier i
                     ON i.noss = ev.noss;
 
 -- vue de la table diététicien
-CREATE OR REPLACE VIEW dieteticien_vue AS
+CREATE OR REPLACE VIEW suivi_dietetique.dieteticien_vue AS
 SELECT ev.noss,
        ev.nom,
        ev.prenom,
@@ -79,14 +79,13 @@ FROM suivi_dietetique.dieteticien d
                     ON d.noss = ev.noss;
 
 -- vue des objectifs hebdomadaires
-CREATE OR REPLACE VIEW objectif_hebdomadaire AS
+CREATE OR REPLACE VIEW suivi_dietetique.objectif_hebdomadaire AS
 SELECT nom, prenom, commentaire, reussi
 FROM patient_vue p
          INNER JOIN suivi_dietetique.objectif o
                     ON p.noss = o.noss_patient
 GROUP BY nom, prenom, reussi, commentaire;
 
-DROP VIEW IF EXISTS suivi_dietetique.consommables_repas;
 
 -- Consommables par repas
 CREATE OR REPLACE VIEW suivi_dietetique.consommables_repas AS
@@ -246,7 +245,7 @@ WHERE ds.date = (SELECT MAX(date)
 ------------------------------------------------------------------------------------
 
 -- Triggers permettant de vérifier les allergies d'un patient
-CREATE OR REPLACE FUNCTION verifier_allergies()
+CREATE OR REPLACE FUNCTION suivi_dietetique.verifier_allergies()
     RETURNS TRIGGER AS
 $$
 BEGIN
@@ -261,13 +260,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER tg_verifier_allergies
+CREATE OR REPLACE TRIGGER suivi_dietetique.tg_verifier_allergies
     BEFORE INSERT
     ON suivi_dietetique.quantite_repas_consommable
     FOR EACH ROW
 EXECUTE FUNCTION verifier_allergies();
 
-CREATE OR REPLACE FUNCTION valider_utilisateur()
+CREATE OR REPLACE FUNCTION suivi_dietetique.valider_utilisateur()
     RETURNS TRIGGER AS
 $$
 BEGIN
@@ -288,7 +287,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER tg_valider_utilisateur
+CREATE OR REPLACE TRIGGER suivi_dietetique.tg_valider_utilisateur
     BEFORE INSERT OR UPDATE
     ON suivi_dietetique.utilisateur
     FOR EACH ROW
@@ -299,7 +298,7 @@ EXECUTE FUNCTION valider_utilisateur();
 ------------------------------------------------------------------------------------
 
 -- Fonction permettant de retourner les statistiques nutritionnelles de tous les patients dans un interval
-CREATE OR REPLACE FUNCTION get_stats(days_interval INT)
+CREATE OR REPLACE FUNCTION suivi_dietetique.get_stats(days_interval INT)
     RETURNS TABLE
             (
                 noSS_patient      INTEGER,
@@ -342,20 +341,9 @@ BEGIN
 END;
 $$;
 
--- Statistiques nutritionnelles par patient (jour actuel)
-SELECT *
-FROM get_stats(1);
-
--- Statistiques nutritionnelles par patient (7 derniers jours)
-SELECT *
-FROM get_stats(7);
-
--- Statistiques nutritionnelles par patient (30 derniers jours)
-SELECT *
-FROM get_stats(30);
 
 -- Fonction qui retourne les stats nutritionnelles d'un seul repas d'un patient
-CREATE OR REPLACE FUNCTION get_meal_stats(
+CREATE OR REPLACE FUNCTION suivi_dietetique.get_meal_stats(
     p_noSS_patient      INT,
     p_date_consommation TIMESTAMPTZ
 )
@@ -442,8 +430,6 @@ BEGIN
 END;
 $$;
 
-DROP FUNCTION get_meal_stats(p_noSS_patient INT, p_date_consommation TIMESTAMPTZ);
-
 -- Fonction qui retourne la progression d'un patient sur un interval d'une date de début à une date de fin
 CREATE OR REPLACE FUNCTION suivi_dietetique.progression_patient(
     _noSS INT,
@@ -477,13 +463,6 @@ BEGIN
 END;
 $$;
 
--- Exemple
-SELECT *
-FROM suivi_dietetique.progression_patient(
-        100000005,
-        '2024-01-01 10:00:00'::timestamptz,
-        '2024-11-30 10:00:00'::timestamptz
-     );
 
 -- Fonction qui permet de retourner tous les repas d'un patient dans un certain interval de temps
 CREATE OR REPLACE FUNCTION suivi_dietetique.getRepasFromPatient_Interval(
@@ -509,10 +488,6 @@ BEGIN
         ORDER BY r.date_consommation DESC;
 END;
 $$;
-
--- Exemple utilisation
-SELECT *
-FROM getRepasFromPatient_Interval(100000005, '1 day');
 
 
 -- Retourne tous les repas d’un patient dans un intervalle donné, accompagnés de leurs statistiques nutritionnelles
@@ -570,8 +545,6 @@ BEGIN
 END;
 $$;
 
-SELECT * FROM getRepasWithStats_Interval(100000005, '1 day');
-
 CREATE OR REPLACE FUNCTION suivi_dietetique.getAllRepasWithStats(
     _noSS INT
 )
@@ -623,5 +596,3 @@ BEGIN
         ORDER BY r.date_consommation DESC;
 END;
 $$;
-
-SELECT * FROM getAllRepasWithStats(100000005);
