@@ -53,7 +53,7 @@ services:
       - "traefik.enable=true"
 
       # toute requête arrivant sur http://localhost/api ira vers ce conteneur
-      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=web"
 
       # Ecoute en interne sur le port 80
