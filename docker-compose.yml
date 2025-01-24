@@ -3,23 +3,63 @@ networks:
     driver: bridge
 
 services:
-  static-web:
-    build:
-      context: ./static-website
+  # Traefik:
+  reverse_proxy:
+    image: traefik:v3.3
+    container_name: traefik
+    command:
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--api.insecure=true"
     ports:
-      - "8080:80"
-    container_name: static-website
-
-  api-server:
-    build:
-      context: ./api-server
-    ports:
-      - "7070:80"
-    depends_on:
-      - postgresql
+      - "80:80"                        # Accès principal (HTTP) → routé vers static + API
+      - "8080:8080"                    # Dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - bdr-net
 
+  #  Site web statique:
+  static-web:
+    build:
+      context: ./static-website
+    container_name: static-website
+    expose:
+      - "80"
+    networks:
+      - bdr-net
+    labels:
+      - "traefik.enable=true"
+
+      # toute requête vers http://localhost ira vers ce conteneur
+      - "traefik.http.routers.static.rule=Host(`localhost`)"
+      - "traefik.http.routers.static.entrypoints=web"
+
+      # Ecoute en interne sur le port 80
+      - "traefik.http.services.static.loadbalancer.server.port=80"
+
+  # Serveur API:
+  api-server:
+    build:
+      context: ./api-server
+    container_name: api-server
+    depends_on:
+      - postgresql
+    expose:
+      - "80"
+    networks:
+      - bdr-net
+    labels:
+      - "traefik.enable=true"
+
+      # toute requête arrivant sur http://localhost/api ira vers ce conteneur
+      - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.entrypoints=web"
+
+      # Ecoute en interne sur le port 80
+      - "traefik.http.services.api.loadbalancer.server.port=80"
+
+  # Base de donnée - Suivi_dietetique:
   postgresql:
     image: 'bitnami/postgresql:17'
     container_name: bdr-postgresql
@@ -29,7 +69,7 @@ services:
       - POSTGRESQL_DATABASE=bdr
       - POSTGRESQL_POSTGRES_PASSWORD=root
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - .:/data:ro
       - ./init-scripts:/docker-entrypoint-initdb.d

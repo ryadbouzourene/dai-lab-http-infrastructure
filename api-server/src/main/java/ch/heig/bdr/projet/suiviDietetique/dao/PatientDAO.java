@@ -35,7 +35,7 @@ public class PatientDAO {
             connection.setAutoCommit(false);
     
             // Insérer dans la table personne
-            String insertPersonneQuery = "INSERT INTO personne (noSS, nom, prenom, dateNaissance, sexe) " +
+            String insertPersonneQuery = "INSERT INTO suivi_dietetique.personne (noSS, nom, prenom, dateNaissance, sexe) " +
                     "VALUES (?, ?, ?, ?, ?::suivi_dietetique.sexe)";
             try (PreparedStatement stmt = connection.prepareStatement(insertPersonneQuery)) {
                 stmt.setInt(1, Integer.parseInt(patient.getNoSS()));
@@ -77,7 +77,7 @@ public class PatientDAO {
         List<Patient> patients = new ArrayList<>();
 
         try (Connection connection = Database.getConnection()) {
-            String query = "SELECT * FROM patient_vue";
+            String query = "SELECT * FROM suivi_dietetique.patient_vue";
             try (PreparedStatement stmt = connection.prepareStatement(query);
                  ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -109,7 +109,7 @@ public class PatientDAO {
      */
     public Patient getPatient(String noss) {
         try (Connection connection = Database.getConnection()) {
-            String query = "SELECT * FROM patient_vue WHERE noss = ?";
+            String query = "SELECT * FROM suivi_dietetique.patient_vue WHERE noss = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setInt(1, Integer.parseInt(noss));
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -143,7 +143,7 @@ public class PatientDAO {
         List<Patient> patients = new ArrayList<>();
 
         try (Connection connection = Database.getConnection()) {
-            String query = "SELECT * FROM patient_vue WHERE noss_dieteticien = ?";
+            String query = "SELECT * FROM suivi_dietetique.patient_vue WHERE noss_dieteticien = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setInt(1, Integer.parseInt(noss));
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -177,7 +177,7 @@ public class PatientDAO {
      */
     public List<DonneeSante> getDonneeSantee(String noss) {
         List<DonneeSante> donneesSanteList = new ArrayList<>();
-        String query = "SELECT * FROM donnees_sante WHERE noSS_patient = ?";
+        String query = "SELECT * FROM suivi_dietetique.donnees_sante WHERE noSS_patient = ?";
         
         try (Connection connection = Database.getConnection();
              PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -210,7 +210,7 @@ public class PatientDAO {
      */
     public List<Objectif> getObjectif(String noss) {
         List<Objectif> objectifs = new ArrayList<>();
-        String query = "SELECT * FROM objectif WHERE noSS_patient = ?";
+        String query = "SELECT * FROM suivi_dietetique.objectif WHERE noSS_patient = ?";
         
         try (Connection connection = Database.getConnection();
              PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -245,7 +245,7 @@ public class PatientDAO {
      */
     public List<Allergene> getAllergies(String noss) {
         List<Allergene> allergenes = new ArrayList<>();
-        String query = "SELECT nom_allergene FROM est_allergique WHERE noSS_patient = ?";
+        String query = "SELECT nom_allergene FROM suivi_dietetique.est_allergique WHERE noSS_patient = ?";
     
         try (Connection connection = Database.getConnection();
              PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -276,7 +276,7 @@ public class PatientDAO {
             // Mise à jour des informations générales
             String query1 = "UPDATE personne SET nom = ?, prenom = ?, datenaissance = ?, sexe = ?, email = ? " +
                           "WHERE noss = ?";
-            String query2 = "UPDATE patient SET dateadmission = ? WHERE noss = ?";
+            String query2 = "UPDATE suivi_dietetique.patient SET dateadmission = ? WHERE noss = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query1)) {
                 stmt.setString(1, updatedPatient.getNom());
                 stmt.setString(2, updatedPatient.getPrenom());
@@ -312,7 +312,7 @@ public class PatientDAO {
      */
     public boolean deletePatient(String noss) {
         try (Connection connection = Database.getConnection()) {
-            String query = "DELETE FROM patient WHERE noss = ?";
+            String query = "DELETE FROM suivi_dietetique.patient WHERE noss = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setInt(1, Integer.parseInt(noss));
                 int rowsAffected = stmt.executeUpdate();
