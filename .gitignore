@@ -1,8 +1,8 @@
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-/api-server/target/
-!/api-server/target/SuiviDietetique-1.0-SNAPSHOT-jar-with-dependencies.jar
+/api-server/target/*
+!api-server/target/SuiviDietetique-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
