@@ -1,6 +1,7 @@
 networks:
   bdr-net:
     driver: overlay
+    attachable: true
 
 services:
   # Traefik:
