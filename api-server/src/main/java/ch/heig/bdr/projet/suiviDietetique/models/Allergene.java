@@ -9,7 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class Allergene {
     /** Nom de l'allergène, tel que stocké dans la base de données */
+    @JsonProperty("nom_allergene")
     protected String nom_allergene;
+
+    /** Constructeur par dflt */
+    public Allergene() {}
 
     /**
      * Constructeur pour créer un nouvel allergène.

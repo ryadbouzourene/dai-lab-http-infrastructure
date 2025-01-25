@@ -9,7 +9,7 @@ public class PersonneService {
     private final UserDAO userDAO = new UserDAO();
     private final UserService userService = new UserService();
 
-    public boolean deleteOnePersonne(int noss) {
+    public boolean deleteOnePersonne(String noss) {
         boolean result = personneDAO.deletePersonne(noss);
 
         User user = userService.findByNoss(noss);

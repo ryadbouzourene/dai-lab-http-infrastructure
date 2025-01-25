@@ -3,7 +3,6 @@ package ch.heig.bdr.projet.suiviDietetique.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

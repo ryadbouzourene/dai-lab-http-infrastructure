@@ -42,27 +42,46 @@ public class UnauthRoutesController {
      * @return 401 Unauthorized si les identifiants sont incorrects
      */
     private static void handleLogin(Context ctx) {
-        // Extraire les identifiants du corps de la requête
-        String username = ctx.bodyAsClass(Map.class).get("username").toString();
-        String password = ctx.bodyAsClass(Map.class).get("password").toString();
+        try {
+            // Extraire les identifiants du corps de la requête
+            Map<String, Object> body = ctx.bodyAsClass(Map.class);
+            if (!body.containsKey("username") || !body.containsKey("password")) {
+                ctx.status(422).json(Map.of(
+                    "error", "Données manquantes",
+                    "details", "Le nom d'utilisateur et le mot de passe sont requis"
+                ));
+                return;
+            }
 
-        // Tenter l'authentification
-        User user = authService.authenticate(username, password);
+            String username = body.get("username").toString();
+            String password = body.get("password").toString();
 
-        if (user != null) {
-            // Créer les attributs de session
-            ctx.sessionAttribute("user", username);
-            ctx.sessionAttribute("user-role", user.getRole().toString());
-            ctx.sessionAttribute("user-noss", user.getNoss());
-            
-            // Configuration de la durée de la session (1 heure)
-            ctx.req().getSession().setMaxInactiveInterval(60 * 60);
-            
-            // Renvoyer les informations de l'utilisateur
-            ctx.json(Map.of("username", username, "role",
-                    user.getRole().toString(), "noss", user.getNoss()));
-        } else {
-            ctx.status(401).result("Email ou mot de passe incorrect.");
+            // Tenter l'authentification
+            User user = authService.authenticate(username, password);
+
+            if (user != null) {
+                // Créer les attributs de session
+                ctx.sessionAttribute("user", username);
+                ctx.sessionAttribute("user-role", user.getRole().toString());
+                ctx.sessionAttribute("user-noss", user.getNoss());
+                
+                // Configuration de la durée de la session (1 heure)
+                ctx.req().getSession().setMaxInactiveInterval(60 * 60);
+                
+                // Renvoyer les informations de l'utilisateur
+                ctx.json(Map.of("username", username, "role",
+                        user.getRole().toString(), "noss", user.getNoss()));
+            } else {
+                ctx.status(401).json(Map.of(
+                    "error", "Authentification échouée",
+                    "details", "Email ou mot de passe incorrect"
+                ));
+            }
+        } catch (Exception e) {
+            ctx.status(422).json(Map.of(
+                "error", "Erreur lors de la connexion",
+                "details", e.getMessage()
+            ));
         }
     }
 
@@ -74,9 +93,16 @@ public class UnauthRoutesController {
      * @return 200 OK avec un message de confirmation
      */
     private static void handleLogout(Context ctx) {
-        // Invalider la session
-        ctx.req().getSession().invalidate();
-        ctx.status(200).result("Déconnexion réussie.");
+        try {
+            // Invalider la session
+            ctx.req().getSession().invalidate();
+            ctx.status(200).json(Map.of("message", "Déconnexion réussie"));
+        } catch (Exception e) {
+            ctx.status(422).json(Map.of(
+                "error", "Erreur lors de la déconnexion",
+                "details", e.getMessage()
+            ));
+        }
     }
 
     /**
@@ -89,16 +115,26 @@ public class UnauthRoutesController {
      * @return 401 Unauthorized si la session n'est pas active
      */
     private static void handleCheckSession(Context ctx) {
-        // Récupérer les attributs de session
-        String username = ctx.sessionAttribute("user");
-        String userRole = ctx.sessionAttribute("user-role");
-        Integer userNoss = ctx.sessionAttribute("user-noss");
+        try {
+            // Récupérer les attributs de session
+            String username = ctx.sessionAttribute("user");
+            String userRole = ctx.sessionAttribute("user-role");
+            Integer userNoss = ctx.sessionAttribute("user-noss");
 
-        // Vérifier si la session est valide
-        if (username == null || userRole == null || userNoss == null) {
-            ctx.status(401).result("Non authentifié.");
-        } else {
-            ctx.json(Map.of("username", username, "role", userRole, "noss", userNoss));
+            // Vérifier si la session est valide
+            if (username == null || userRole == null || userNoss == null) {
+                ctx.status(401).json(Map.of(
+                    "error", "Non authentifié",
+                    "details", "La session n'est pas valide"
+                ));
+            } else {
+                ctx.json(Map.of("username", username, "role", userRole, "noss", userNoss));
+            }
+        } catch (Exception e) {
+            ctx.status(422).json(Map.of(
+                "error", "Erreur lors de la vérification de la session",
+                "details", e.getMessage()
+            ));
         }
     }
 }

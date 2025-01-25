@@ -38,9 +38,9 @@ public class PatientService {
     public List<Allergene> getAllAllergies(String noss){
         return patientDAO.getAllergies(noss);
     }
-    
-    public boolean deleteOnePatient(String noss){
-        return patientDAO.deletePatient(noss);
+
+    public void updatePatient(Patient patient, String noss){ 
+        patientDAO.updatePatient(patient, noss);
     }
 
 }

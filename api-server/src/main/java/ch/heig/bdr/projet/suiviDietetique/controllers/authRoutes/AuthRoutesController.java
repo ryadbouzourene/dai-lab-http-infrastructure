@@ -1,6 +1,5 @@
 package ch.heig.bdr.projet.suiviDietetique.controllers.authRoutes;
 
-import ch.heig.bdr.projet.suiviDietetique.security.Role;
 import io.javalin.Javalin;
 
 /**

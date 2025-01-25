@@ -17,7 +17,7 @@ public class UserService {
         return userDAO.deleteUser(email);
     }
 
-    public User findByNoss(int noss) {
+    public User findByNoss(String noss) {
         return userDAO.findByNoss(noss);
     }
 }

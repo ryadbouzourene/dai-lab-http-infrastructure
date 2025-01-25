@@ -4,6 +4,7 @@ import ch.heig.bdr.projet.suiviDietetique.security.Role;
 import ch.heig.bdr.projet.suiviDietetique.services.AllergeneService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.Map;
 
 /**
  * Contrôleur gérant les routes API pour les allergènes.
@@ -22,13 +23,9 @@ public class AllergeneController {
      * @param app L'instance Javalin pour l'enregistrement des routes
      */
     public static void registerRoutes(Javalin app) {
-        try {
-            // Route accessible à tous les utilisateurs authentifiés
-            app.get("/api/allergenes", AllergeneController::getAllAllergene, 
-                   Role.ADMIN, Role.DIETETICIEN, Role.INFIRMIER, Role.PATIENT);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Route accessible à tous les utilisateurs authentifiés
+        app.get("/api/allergenes", AllergeneController::getAllAllergene, 
+               Role.ADMIN, Role.DIETETICIEN, Role.INFIRMIER, Role.PATIENT);
     }
 
     /**
@@ -37,8 +34,16 @@ public class AllergeneController {
      * 
      * @param ctx Le contexte de la requête HTTP
      * @return 200 OK avec la liste des allergènes
+     * @return 422 Unprocessable Entity en cas d'erreur
      */
     public static void getAllAllergene(Context ctx) {
-        ctx.json(allergeneService.getAllAllergeneDAO());
+        try {
+            ctx.json(allergeneService.getAllAllergeneDAO());
+        } catch (Exception e) {
+            ctx.status(422).json(Map.of(
+                "error", "Erreur lors de la récupération des allergènes",
+                "details", e.getMessage()
+            ));
+        }
     }
 }

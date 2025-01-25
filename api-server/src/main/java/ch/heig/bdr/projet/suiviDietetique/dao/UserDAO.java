@@ -79,11 +79,11 @@ public class UserDAO {
      * @param noss Le numéro de sécurité sociale à rechercher
      * @return L'utilisateur trouvé ou null si aucun utilisateur ne correspond
      */
-    public User findByNoss(int noss) {
+    public User findByNoss(String noss) {
         try (Connection connection = Database.getConnection()) {
             String query = "SELECT * FROM Utilisateur WHERE noss = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
-                stmt.setInt(1, noss);
+                stmt.setInt(1, Integer.parseInt(noss));
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         // Création d'un objet User à partir des données de la base
