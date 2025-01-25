@@ -1,12 +1,12 @@
 networks:
   bdr-net:
-    driver: bridge
+    driver: overlay
 
 services:
   # Traefik:
   reverse_proxy:
     image: traefik:v3.3
-    container_name: traefik
+    # container_name: traefik
     command:
       - "--entrypoints.web.address=:80"
       - "--providers.docker=true"
@@ -21,11 +21,12 @@ services:
 
   #  Site web statique:
   static-web:
-    build:
-      context: ./static-website
-    container_name: static-website
-    expose:
-      - "80"
+    image: static-web:latest
+    # container_name: static-website --> Interdit
+    deploy:
+      replicas: 3  # Trois instances pour le site statique
+      restart_policy:
+        condition: on-failure
     networks:
       - bdr-net
     labels:
@@ -40,20 +41,21 @@ services:
 
   # Serveur API:
   api-server:
-    build:
-      context: ./api-server
-    container_name: api-server
+    image: api-server:latest
+    # container_name: api-server --> Interdit
     depends_on:
       - postgresql
-    expose:
-      - "80"
+    deploy:
+      replicas: 3  # Trois instances pour le site API
+      restart_policy:
+        condition: on-failure
     networks:
       - bdr-net
     labels:
       - "traefik.enable=true"
 
       # toute requête arrivant sur http://localhost/api ira vers ce conteneur
-      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=web"
 
       # Ecoute en interne sur le port 80
@@ -62,7 +64,7 @@ services:
   # Base de donnée - Suivi_dietetique:
   postgresql:
     image: 'bitnami/postgresql:17'
-    container_name: bdr-postgresql
+    # container_name: bdr-postgresql
     environment:
       - POSTGRESQL_USERNAME=bdr
       - POSTGRESQL_PASSWORD=bdr

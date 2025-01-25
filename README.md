@@ -193,4 +193,141 @@ Ce tableau de bord permet de :
 - Contrôler si les routes définies (telles que Host(localhost), PathPrefix(/api), etc.) sont bien reconnues et fonctionnelles.
 - Identifier et résoudre facilement d’éventuels problèmes de configuration.
 
-## Etape 5: Scalabilité et load balancing
+---
+
+## Étape 5 : Scalabilité et Load Balancing
+
+L'objectif de cette étape est de permettre la scalabilité de l'infrastructure en déployant plusieurs instances de chaque service (site statique et API) et de s'assurer que le proxy inverse **Traefik** effectue correctement l'équilibrage de charge (load balancing) entre ces instances.
+
+---
+
+### Configuration pour plusieurs instances d'un même service
+
+Pour configurer plusieurs instances, il est nécessaire de modifier le fichier `docker-compose.yml` en ajoutant les paramètres suivants pour chaque service (par exemple, `static-web` et `api-server`) :
+
+```yaml
+deploy:
+  replicas: <X>
+  restart_policy:
+    condition: on-failure
+```
+
+#### Explications :
+- **`replicas: <X>`** : Définit le nombre d'instances (réplicas) à déployer pour le service.
+- **`restart_policy: condition: on-failure`** : Assure que les conteneurs redémarrent automatiquement en cas d'échec.
+
+---
+
+### Étapes pour lancer et gérer l'infrastructure
+
+#### 1. Pré-construire les images Docker
+
+Avant de déployer les services, il est nécessaire de construire les images Docker pour le site statique et l'API :
+- **Construire l'image du site statique** :
+  ```bash
+  docker build -t static-web:latest ./static-website
+  ```
+- **Construire l'image de l'API** :
+  ```bash
+  docker build -t api-server:latest ./api-server
+  ```
+
+#### 2. Activer le mode Docker Swarm
+
+Le mode Swarm est requis pour utiliser l'option `deploy.replicas`. Pour activer le mode Swarm :
+```bash
+docker swarm init
+```
+
+- **Vérifier que Swarm est activé** :
+  ```bash
+  docker info
+  ```
+  Si Swarm est activé, la section **Swarm** affichera "active".
+
+- **Désactiver le mode Swarm** (si nécessaire) :
+  ```bash
+  docker swarm leave --force
+  ```
+
+#### 3. Déployer l'infrastructure avec plusieurs instances
+
+Une fois le mode Swarm activé, déployez les services définis dans `docker-compose.yml` :
+```bash
+docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
+```
+- `<nom_de_stack>` : Nom de l'ensemble des services (par exemple, `my_stack`).
+
+Pour vérifier que les services sont bien déployés et que toutes les instances sont actives :
+```bash
+docker service ls
+```
+
+---
+
+### Ajuster dynamiquement le nombre d'instances d'un service
+
+Pour ajouter ou réduire dynamiquement le nombre de réplicas d’un service sans redémarrer l'infrastructure, utilisez la commande suivante :
+```bash
+docker service scale <nom_du_service>=<X>
+```
+
+#### Paramètres :
+- **`<nom_du_service>`** : Nom du service à mettre à jour (par exemple, `my_stack_static-web`).
+- **`<X>`** : Nombre d'instances souhaitées.
+
+#### Vérification :
+- Vérifiez le nombre de réplicas avec la commande :
+  ```bash
+  docker service ls
+  ```
+- Vous pouvez également consulter le tableau de bord de Traefik dans l'onglet **HTTP Services** pour voir le nombre d'instances actives dans la colonne "Servers".
+
+---
+
+### Vérification du Load Balancing
+
+#### Étape 1 : Observer les logs des services
+
+Exécutez la commande suivante pour afficher les logs des instances d'un service spécifique :
+```bash
+docker service logs my_stack_static-web --follow
+```
+
+Chaque log indique l'instance qui traite les requêtes. Les IDs de conteneurs dans les logs permettent de différencier les instances.
+
+#### Étape 2 : Tester l'équilibrage de charge avec des requêtes
+
+Envoyez plusieurs requêtes au service pour observer comment elles sont distribuées entre les instances. Par exemple, pour tester le site statique avec `curl` :
+```bash
+for i in {1..10}; do
+  curl -s "http://localhost?unique=$RANDOM"
+done
+```
+
+- **Pourquoi ajouter `?unique=$RANDOM` ?**  
+  Cela permet de contourner le cache en générant une requête unique à chaque itération.
+
+#### Résultat attendu :
+Dans la console des logs, vous verrez que les requêtes sont distribuées entre les différentes instances. Chaque instance traite certaines requêtes, prouvant que **Traefik effectue correctement l'équilibrage de charge**.
+
+---
+
+### Résumé des commandes essentielles
+
+| Action                                    | Commande                                                                                                |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Construire les images Docker             | `docker build -t static-web:latest ./static-website`<br>`docker build -t api-server:latest ./api-server` |
+| Activer Docker Swarm                     | `docker swarm init`                                                                                     |
+| Déployer les services avec Docker Stack  | `docker stack deploy --compose-file docker-compose.yml my_stack`                                       |
+| Vérifier les services actifs             | `docker service ls`                                                                                     |
+| Ajuster dynamiquement les réplicas       | `docker service scale my_stack_static-web=5`                                                           |
+| Observer les logs                        | `docker service logs my_stack_static-web --follow`                                                     |
+| Tester l'équilibrage avec des requêtes   | `for i in {1..10}; do curl -s "http://localhost?unique=$RANDOM"; done`                                 |
+
+---
+
+### Conclusion
+
+Grâce à cette configuration, notre infrastructure est désormais scalable et utilise un équilibrage de charge automatique via **Traefik**. Le mode Swarm permet d'ajuster dynamiquement le nombre d'instances des services en fonction des besoins, et **Traefik détecte automatiquement les instances disponibles pour répartir le trafic sans interruption**. Les tests réalisés montrent que les requêtes sont bien distribuées entre les différentes instances, assurant une haute disponibilité et une montée en charge efficace.
+
