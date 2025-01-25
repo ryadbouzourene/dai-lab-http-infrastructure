@@ -267,7 +267,8 @@ docker service ls
 
 ### Ajuster dynamiquement le nombre d'instances d'un service
 
-Pour ajouter ou réduire dynamiquement le nombre de réplicas d’un service sans redémarrer l'infrastructure, utilisez la commande suivante :
+Pour ajouter ou réduire dynamiquement le nombre de réplicas d’un service sans redémarrer l'infrastructure,
+utilisez la commande suivante :
 ```bash
 docker service scale <nom_du_service>=<X>
 ```
@@ -281,7 +282,8 @@ docker service scale <nom_du_service>=<X>
   ```bash
   docker service ls
   ```
-- Vous pouvez également consulter le tableau de bord de Traefik dans l'onglet **HTTP Services** pour voir le nombre d'instances actives dans la colonne "Servers".
+- Vous pouvez également consulter le tableau de bord de Traefik dans l'onglet **HTTP Services** pour voir le nombre
+d'instances actives dans la colonne "Servers".
 
 ---
 
@@ -294,11 +296,13 @@ Exécutez la commande suivante pour afficher les logs des instances d'un service
 docker service logs my_stack_static-web --follow
 ```
 
-Chaque log indique l'instance qui traite les requêtes. Les IDs de conteneurs dans les logs permettent de différencier les instances.
+Chaque log indique l'instance qui traite les requêtes. Les IDs de conteneurs dans les logs permettent de différencier
+les instances.
 
 #### Étape 2 : Tester l'équilibrage de charge avec des requêtes
 
-Envoyez plusieurs requêtes au service pour observer comment elles sont distribuées entre les instances. Par exemple, pour tester le site statique avec `curl` :
+Envoyez plusieurs requêtes au service pour observer comment elles sont distribuées entre les instances. Par exemple,
+pour tester le site statique avec `curl` :
 ```bash
 for i in {1..10}; do
   curl -s "http://localhost?unique=$RANDOM"
@@ -331,3 +335,79 @@ Dans la console des logs, vous verrez que les requêtes sont distribuées entre 
 
 Grâce à cette configuration, notre infrastructure est désormais scalable et utilise un équilibrage de charge automatique via **Traefik**. Le mode Swarm permet d'ajuster dynamiquement le nombre d'instances des services en fonction des besoins, et **Traefik détecte automatiquement les instances disponibles pour répartir le trafic sans interruption**. Les tests réalisés montrent que les requêtes sont bien distribuées entre les différentes instances, assurant une haute disponibilité et une montée en charge efficace.
 
+--- 
+
+## Étape 6 : Load balancing avec round-robin et sticky sessions
+### Objectifs
+L'objectif de cette étape est de configurer Traefik pour :
+
+- Utiliser le round-robin pour le site statique.
+- Activer les sticky sessions pour l'API dynamique.
+Les **sticky sessions** permettent d'associer un utilisateur ou une session spécifique à une instance particulière d'un 
+- service. Cela signifie que toutes les requêtes provenant du même utilisateur sont toujours envoyées à la même instance.
+
+Ce mécanisme est essentiel pour les applications **stateful** (avec état), comme notre API, qui gèrent des 
+sessions utilisateurs ou des connexions à une base de données. Dans le cas présent, Traefik utilise un cookie 
+(nommé `api-session`) pour identifier et associer chaque session à une instance précise. 
+Ce cookie est généré automatiquement lors de la première requête et est utilisé pour router les requêtes suivantes
+vers la même instance.
+
+Les sticky sessions permettent d'éviter des problèmes liés à la répartition des requêtes entre plusieurs instances 
+pour une même session utilisateur.
+
+### Configuration
+#### Site statique (round-robin par défaut)
+
+La configuration pour le site statique n’a pas été modifiée, car Traefik utilise le round-robin par défaut.
+Les requêtes sont distribuées équitablement entre toutes les instances du service.
+
+#### API dynamique (sticky sessions)
+
+Voici la configuration ajoutée dans docker-compose.yml pour activer les sticky sessions sur l'API :
+
+```yaml
+api-server:
+  image: api-server:latest
+  deploy:
+    replicas: 3
+    restart_policy:
+      condition: on-failure
+  networks:
+    - bdr-net
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+    - "traefik.http.routers.api.entrypoints=web"
+    - "traefik.http.services.api.loadbalancer.server.port=80"
+    - "traefik.http.services.api.loadbalancer.sticky.cookie=true"
+    - "traefik.http.services.api.loadbalancer.sticky.cookie.name=api-session"
+``` 
+### Vérification des fonctionnalités
+#### Round-robin pour le site statique :
+
+En envoyant plusieurs requêtes à http://localhost, nous avons constaté que les réponses proviennent de différentes
+instances du site statique (voir étape 5: Scalabilité et Load balancing).
+
+Résultat attendu : Les réponses montrent une distribution équitable entre les instances.
+
+#### Sticky sessions pour l'API :
+
+Avant l'implémentation des sticky sessions, notre API rencontrait des problèmes de connexion. Chaque requête était
+potentiellement envoyée à une instance différente, ce qui perturbait la gestion des sessions et des connexions
+utilisateur.
+
+Après avoir configuré le fichier `docker-compose.yml` avec les labels activant les sticky sessions, les problèmes de
+connexion ont été résolus. Cela montre que le mécanisme de sticky sessions fonctionne correctement, car chaque session
+est maintenant associée à une instance spécifique.
+
+Pour valider davantage, nous avons remarqué que le cookie de session, généré par Traefik, reste constant lors
+des multiples requêtes d'un même utilisateur, garantissant que toutes les requêtes d'une session sont acheminées vers
+la même instance.
+
+### Conclusion
+Grâce à cette configuration :
+
+- Round-robin est utilisé pour le site statique, ce qui assure une répartition équitable des requêtes entre les instances.
+- Sticky sessions sont activées pour l'API, garantissant que les requêtes d'une même session utilisateur sont
+acheminées vers la même instance.
+- Les tests réalisés confirment le fonctionnement attendu, validant l'utilisation correcte des deux méthodes d'équilibrage.

@@ -39,6 +39,8 @@ services:
       # Ecoute en interne sur le port 80
       - "traefik.http.services.static.loadbalancer.server.port=80"
 
+      # Configuration pour sticky sessions non-nécessaire
+
   # Serveur API:
   api-server:
     image: api-server:latest
@@ -60,6 +62,10 @@ services:
 
       # Ecoute en interne sur le port 80
       - "traefik.http.services.api.loadbalancer.server.port=80"
+
+      # Configuration pour Sticky sessions (à base de cookies)
+      - "traefik.http.services.api.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.api.loadbalancer.sticky.cookie.name=api-session"
 
   # Base de donnée - Suivi_dietetique:
   postgresql:
