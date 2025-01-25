@@ -1,86 +1,101 @@
 networks:
   bdr-net:
     driver: overlay
-    attachable: true
+    attachable: true  # Permet à d'autres conteneurs de se connecter dynamiquement au réseau
 
 services:
-  # Traefik:
+  # Service Reverse Proxy (Traefik)
   reverse_proxy:
     image: traefik:v3.3
-    # container_name: traefik
+
     command:
-      - "--entrypoints.web.address=:80"
+      # Définit les points d'entrée HTTP et HTTPS
+      - "--entrypoints.web.address=:80"       # Point d'entrée HTTP
+      - "--entrypoints.websecure.address=:443" # Point d'entrée HTTPS
+
+      # Active la détection des services Docker
       - "--providers.docker=true"
-      - "--api.insecure=true"
+
+      # Active et sécurise le tableau de bord Traefik
+      - "--api=true"
+      - "--api.dashboard=true"
+
+      # Configure ACME pour gérer les certificats TLS
+      - "--certificatesresolvers.default.acme.tlschallenge=true"
+      - "--certificatesresolvers.default.acme.email=example@example.com" # Remplacez par votre email
+      - "--certificatesresolvers.default.acme.storage=/etc/traefik/acme.json"
     ports:
-      - "80:80"                        # Accès principal (HTTP) → routé vers static + API
-      - "8080:8080"                    # Dashboard Traefik
+      - "80:80"    # Port public pour HTTP
+      - "443:443"  # Port public pour HTTPS
+      - "8080:8080" # Port public pour le tableau de bord Traefik
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Permet à Traefik d'interagir avec l'API Docker
+      - ./traefik.yaml:/etc/traefik/traefik.yaml     # Monte le fichier de configuration de Traefik
+      - ./certificates:/etc/traefik/certificates     # Monte les certificats auto-signés
+      - ./acme.json:/etc/traefik/acme.json           # Stocke les informations liées aux certificats
     networks:
       - bdr-net
 
-  #  Site web statique:
+  # Serveur web statique
   static-web:
     image: static-web:latest
-    # container_name: static-website --> Interdit
     deploy:
-      replicas: 3  # Trois instances pour le site statique
+      replicas: 3  # Crée trois instances pour équilibrage de charge
       restart_policy:
-        condition: on-failure
+        condition: on-failure  # Redémarre en cas d'échec
     networks:
       - bdr-net
     labels:
+      # Active Traefik pour ce service
       - "traefik.enable=true"
 
-      # toute requête vers http://localhost ira vers ce conteneur
+      # Route tout trafic vers localhost (HTTPS activé)
       - "traefik.http.routers.static.rule=Host(`localhost`)"
-      - "traefik.http.routers.static.entrypoints=web"
+      - "traefik.http.routers.static.entrypoints=websecure"
+      - "traefik.http.routers.static.tls=true"
 
-      # Ecoute en interne sur le port 80
+      # Port interne exposé par le conteneur
       - "traefik.http.services.static.loadbalancer.server.port=80"
 
-      # Configuration pour sticky sessions non-nécessaire
-
-  # Serveur API:
+  # Serveur d'API dynamique
   api-server:
     image: api-server:latest
-    # container_name: api-server --> Interdit
     depends_on:
-      - postgresql
+      - postgresql  # Dépend de PostgreSQL pour démarrer
     deploy:
-      replicas: 3  # Trois instances pour le site API
+      replicas: 3  # Trois instances pour répartir la charge
       restart_policy:
         condition: on-failure
     networks:
       - bdr-net
     labels:
+      # Active Traefik pour ce service
       - "traefik.enable=true"
 
-      # toute requête arrivant sur http://localhost/api ira vers ce conteneur
+      # Route les requêtes vers /api
       - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
 
-      # Ecoute en interne sur le port 80
+      # Port interne exposé par le conteneur
       - "traefik.http.services.api.loadbalancer.server.port=80"
 
-      # Configuration pour Sticky sessions (à base de cookies)
+      # Active les sessions persistantes avec cookies
       - "traefik.http.services.api.loadbalancer.sticky.cookie=true"
       - "traefik.http.services.api.loadbalancer.sticky.cookie.name=api-session"
 
-  # Base de donnée - Suivi_dietetique:
+  # Base de données PostgreSQL
   postgresql:
     image: 'bitnami/postgresql:17'
-    # container_name: bdr-postgresql
     environment:
-      - POSTGRESQL_USERNAME=bdr
-      - POSTGRESQL_PASSWORD=bdr
-      - POSTGRESQL_DATABASE=bdr
-      - POSTGRESQL_POSTGRES_PASSWORD=root
+      - POSTGRESQL_USERNAME=bdr  # Utilisateur par défaut
+      - POSTGRESQL_PASSWORD=bdr  # Mot de passe utilisateur
+      - POSTGRESQL_DATABASE=bdr  # Nom de la base de données
+      - POSTGRESQL_POSTGRES_PASSWORD=root  # Mot de passe administrateur
     ports:
-      - "5432:5432"
+      - "5432:5432"  # Port pour accéder à la base de données
     volumes:
-      - .:/data:ro
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - .:/data:ro  # Monte un dossier local en lecture seule
+      - ./init-scripts:/docker-entrypoint-initdb.d  # Scripts d'initialisation
     networks:
       - bdr-net
