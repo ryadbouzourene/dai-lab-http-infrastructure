@@ -170,10 +170,10 @@ The goal of this step is to change the configuration such that:
 
 ### Acceptance criteria
 
-- [ ] You do a setup to demonstrate the notion of sticky session.
-- [ ] You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the static server nodes (because there is no state).
-- [ ] You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the dynamic server nodes.
-- [ ] You have **documented** your configuration and your validation procedure in your report.
+- [X] You do a setup to demonstrate the notion of sticky session.
+- [X] You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the static server nodes (because there is no state).
+- [X] You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the dynamic server nodes.
+- [X] You have **documented** your configuration and your validation procedure in your report.
 
 
 Step 7: Securing Traefik with HTTPS
