@@ -411,3 +411,130 @@ Grâce à cette configuration :
 - Sticky sessions sont activées pour l'API, garantissant que les requêtes d'une même session utilisateur sont
 acheminées vers la même instance.
 - Les tests réalisés confirment le fonctionnement attendu, validant l'utilisation correcte des deux méthodes d'équilibrage.
+
+--- 
+
+## Etape 7: Sécuriser Traefik avec HTTPS
+
+Dans cette étape, nous avons configuré **Traefik** pour communiquer en HTTPS avec les clients (navigateurs), tout en conservant une communication interne en HTTP entre le proxy et les services (site statique et API).
+L’objectif est de **chiffrer** toutes les connexions provenant de l’extérieur, même si le certificat utilisé est **autosigné** (self-signed).
+
+---
+
+### 1. Génération d’un certificat autosigné
+Ne pouvant pas (dans notre cas) utiliser des certificats publics (ex. Let’s Encrypt), nous avons généré un certificat autosigné. Pour cela, nous avons utilisé la commande openssl :
+
+```bash
+mkdir certificates
+cd certificates
+openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+  -keyout server.key -out server.crt \
+  -subj "/CN=localhost"
+```
+- ``server.crt`` : Certificat public autosigné.
+- ``server.key`` : Clé privée associée.
+
+Ces deux fichiers sont montés dans le conteneur Traefik pour lui permettre de gérer TLS.
+
+### 2. Configuration de Traefik
+#### 2.1. Fichier traefik.yaml
+Pour activer TLS, nous avons ajouté un bloc tls pointant vers le dossier contenant server.crt et server.key. Voici un extrait :
+
+```yaml
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"       # HTTP
+  websecure:
+    address: ":443"      # HTTPS
+  dashboard:
+    address: ":8080"     # HTTPS pour le dashboard
+
+providers:
+  docker:
+    exposedByDefault: false
+
+tls:
+  certificates:
+    - certFile: "/etc/traefik/certificates/server.crt"
+      keyFile:  "/etc/traefik/certificates/server.key"
+```
+- entryPoints.websecure : Définit l’écoute HTTPS sur le port :443.
+- tls: : Localise les certificats chargés par Traefik.
+- dashboard: : Gère un entrypoint dédié au dashboard en HTTPS (port 8080).
+
+#### 2.2. Labels Docker pour activer HTTPS
+Dans le docker-compose.yml, nous avons ajouté des labels pour chaque service (site statique et API) afin d’activer l’entrée HTTPS :
+
+```yaml
+static-web:
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.static.rule=Host(`localhost`)"
+    - "traefik.http.routers.static.entrypoints=web"
+    - "traefik.http.routers.static.tls=true"
+    - "traefik.http.routers.static.entrypoints=websecure"
+    - "traefik.http.services.static.loadbalancer.server.port=80"
+```
+- traefik.http.routers.static.tls=true : Active TLS pour ce router (donc l’entrée websecure).
+- websecure (port 443) et web (port 80) sont tous deux déclarés, permettant au service d’être disponible sur HTTP et HTTPS.
+
+Le même principe est appliqué à l’API :
+
+```yaml
+api-server:
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
+    - "traefik.http.routers.api.entrypoints=web"
+    - "traefik.http.routers.api.tls=true"
+    - "traefik.http.routers.api.entrypoints=websecure"
+    - "traefik.http.services.api.loadbalancer.server.port=80"
+    - "traefik.http.services.api.loadbalancer.sticky.cookie=true"
+    - "traefik.http.services.api.loadbalancer.sticky.cookie.name=api-session"
+```
+Ainsi, on dispose de HTTP et HTTPS pour l’API.
+
+### 3. Accès au Dashboard en HTTPS sur :8080
+Au lieu d’utiliser api.insecure=true, nous avons configuré un entrypoint nommé dashboard écoutant en HTTPS sur le port 8080. Dans les labels du service Traefik :
+
+```yaml
+reverse_proxy:
+  ports:
+    - "80:80"
+    - "443:443"
+    - "8080:8080"
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.traefik-dashboard.rule=Host(`localhost`)"
+    - "traefik.http.routers.traefik-dashboard.entrypoints=dashboard"
+    - "traefik.http.routers.traefik-dashboard.tls=true"
+    - "traefik.http.routers.traefik-dashboard.service=api@internal"
+```
+De cette façon, on peut accéder au dashboard via https://localhost:8080.
+
+Le certificat autosigné générera un avertissement de sécurité que l’on peut ignorer.
+
+### 4. Tests et validation
+#### 4.1. Connexion HTTPS au site statique et à l’API
+- Site statique :
+Accéder à https://localhost (ou le domaine/host configuré).
+Le navigateur indique « connexion non sécurisée » (puisqu’il s’agit d’un certificat autosigné), ce qui est normal.
+
+- API :
+Vérifier les routes https://localhost/api/... pour confirmer que l’API répond en HTTPS.
+
+#### 4.2. Dashboard Traefik
+En tapant https://localhost:8080, on obtient le dashboard, montrant les routers et services configurés.
+Cela permet de confirmer la bonne prise en charge de TLS et le routage correct.
+
+### 5. Conclusion
+Grâce à cette configuration :
+
+- Le trafic externe (navigateur → proxy Traefik) est entièrement chiffré en HTTPS.
+- Les certificats autosignés permettent de sécuriser le développement local, malgré l’avertissement du navigateur.
+- Le dashboard est lui aussi disponible en HTTPS, évitant le mode insecure par défaut.
+- Les services (site statique et API) continuent de communiquer en HTTP à l’intérieur du réseau Docker.
+- Cette approche garantit la sécurisation des échanges entre les utilisateurs et nos services, répondant ainsi à l’objectif de chiffrement des données en transit.
