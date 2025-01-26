@@ -305,7 +305,7 @@ Envoyez plusieurs requêtes au service pour observer comment elles sont distribu
 pour tester le site statique avec `curl` :
 ```bash
 for i in {1..10}; do
-  curl -s "http://localhost?unique=$RANDOM"
+  curl -s "http://static-webiste.localhost?unique=$RANDOM"
 done
 ```
 
@@ -327,7 +327,7 @@ Dans la console des logs, vous verrez que les requêtes sont distribuées entre 
 | Vérifier les services actifs             | `docker service ls`                                                                                     |
 | Ajuster dynamiquement les réplicas       | `docker service scale my_stack_static-web=5`                                                           |
 | Observer les logs                        | `docker service logs my_stack_static-web --follow`                                                     |
-| Tester l'équilibrage avec des requêtes   | `for i in {1..10}; do curl -s "http://localhost?unique=$RANDOM"; done`                                 |
+| Tester l'équilibrage avec des requêtes   | `for i in {1..10}; do curl -s "http://static-webiste.localhost?unique=$RANDOM"; done`                                 |
 
 ---
 
