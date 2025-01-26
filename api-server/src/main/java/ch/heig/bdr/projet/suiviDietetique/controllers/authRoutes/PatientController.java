@@ -2,14 +2,14 @@ package ch.heig.bdr.projet.suiviDietetique.controllers.authRoutes;
 
 import ch.heig.bdr.projet.suiviDietetique.security.Role;
 import ch.heig.bdr.projet.suiviDietetique.services.PatientService;
-import ch.heig.bdr.projet.suiviDietetique.services.PersonneService;
 import ch.heig.bdr.projet.suiviDietetique.models.Patient;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
+import java.util.Map;
+
 public class PatientController {
     private static final PatientService patientService = new PatientService();
-    private static final PersonneService personneService = new PersonneService();
 
     public static void registerRoutes(Javalin app) {
         app.get("/api/patients", PatientController::handleGetPatients,Role.DIETETICIEN, Role.INFIRMIER,Role.ADMIN);
@@ -21,6 +21,7 @@ public class PatientController {
         app.post("/api/patients", PatientController::handlePostPatient,Role.ADMIN, Role.DIETETICIEN);
         app.get("/api/patients/{id}/allergies",PatientController::handleGetAllergies,Role.ADMIN,Role.DIETETICIEN,Role.INFIRMIER,Role.PATIENT);
         app.put("/api/patients/{id}", PatientController::handleUpdatePatient,Role.ADMIN, Role.DIETETICIEN);
+        app.delete("/api/patients/{id}", PatientController::handleDeletePatient,Role.ADMIN, Role.DIETETICIEN);
     }
 
     private static void handleGetPatients(Context ctx){
@@ -98,4 +99,20 @@ public class PatientController {
             ctx.status(422).result("Error updating patient: " + e.getMessage());
         }
     }
+
+    private static void handleDeletePatient(Context ctx){
+        try {
+            String noss = ctx.pathParam("id");
+            if (patientService.deleteOnePatient(noss)){
+                ctx.status(200).json(Map.of("message", "Patient supprimé avec succès"));
+            }else{
+                ctx.status(404).json(Map.of("message", "Patient introuvable"));}
+        } catch (Exception e) {
+            ctx.status(422).json(Map.of(
+                "error", "Erreur lors de la suppression du patient",
+                "details", e.getMessage()
+            ));
+        }
+    }
 }
+
