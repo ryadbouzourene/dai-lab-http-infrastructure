@@ -142,7 +142,7 @@ Dans les services static-web (site statique) et api-server (API), nous avons ajo
 ```yaml
 labels:
 - "traefik.enable=true"
-- "traefik.http.routers.static.rule=Host(`localhost`)"
+- "traefik.http.routers.static.rule=Host(`static-website.localhost`)"
 - "traefik.http.routers.static.entrypoints=web"
 - "traefik.http.services.static.loadbalancer.server.port=80"
 ```
@@ -154,7 +154,7 @@ Cela signifie que toutes les requêtes visant http://localhost seront redirigée
 ```yaml
 labels:
 - "traefik.enable=true"
-- "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+- "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
 - "traefik.http.routers.api.entrypoints=web"
 - "traefik.http.services.api.loadbalancer.server.port=80"
 ```
@@ -376,7 +376,7 @@ api-server:
     - bdr-net
   labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+    - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
     - "traefik.http.routers.api.entrypoints=web"
     - "traefik.http.services.api.loadbalancer.server.port=80"
     - "traefik.http.services.api.loadbalancer.sticky.cookie=true"
@@ -472,7 +472,7 @@ Dans le docker-compose.yml, nous avons ajouté des labels pour chaque service (s
 static-web:
   labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.static.rule=Host(`localhost`)"
+    - "traefik.http.routers.static.rule=Host(`static-website.localhost`)"
     - "traefik.http.routers.static.entrypoints=web"
     - "traefik.http.routers.static.tls=true"
     - "traefik.http.routers.static.entrypoints=websecure"
@@ -643,3 +643,64 @@ Ouvrez un navigateur et rendez-vous sur http://localhost:9000.
 - Portainer a été déployé et configuré avec succès, offrant une interface intuitive pour gérer l’infrastructure Docker.
 - Les conteneurs peuvent être listés, démarrés/arrêtés, dupliqués, ou supprimés via l’interface.
 - Des instances dans Docker Compose peuvent être déployées et mises à jour dynamiquement.
+
+## Etape optionnelle 2: Integration API - static Web site
+
+### Objectif
+
+L'objectif de cette section est de connecter un frontend à notre API afin d'effectuer des requêtes sur les endpoints de cette dernière. Etant donné que nous avons développé un frontend pour notre projet de BDR, nous l'avons réutilisé et avons décidé de conserver le site web statique de l'étape 1 tel quel.
+
+### Fonctionnalités du Frontend
+
+Le frontend est une application React permettant à trois types d'utilisateurs de se connecter et d'accéder aux fonctionnalités spécifiques à leurs rôles. Les utilisateurs peuvent se connecter via l'URL suivante :
+
+- URL de connexion : https://localhost
+- Identifiants de test :
+  - `Admin` : admin@test.com, mot de passe : pwd
+  - `Diététicien` : dieteticen@test.com, mot de passe : pwd
+  - `Infirmier` : infirmier@test.com, mot de passe : pwd
+  - `Patient` : patient@test.com, mot de passe : pwd
+
+Différentes opérations peuvent être réalisées selon son rôle dans le but de suivre l'évolution diététique de patients. Il est par exemple possible d'effectuer les actions suivantes :
+
+- Accéder à son dashboard en ayant un affichage correspondant à son rôle
+- Lister les patients, les diétéiciens et les infirmiers
+- Lister les consommables et allergènes.
+- Créer, supprimer ou mettre à jour un patient
+- Créer ou supprimer un repas
+- Créer ou supprimer des données de santé d'un patient
+- Consulter les objectifs d'un patient ou d'un diététicien
+- Consulter un repas particulier et ses statistques nutritionnelles
+- Avoir accès aux repas d'un patient sur une période donnée (un jour, une semaine, un mois, une année, tout) et visualiser des statistiques sur l'évolution des apports nutritionnels.
+- Consulter l'historique des données de santé d'un patient et des statistiques.
+
+Nous vous recommandons de vous conncter avec le rôle de `Diététicien` ou celui de `Patient` pour avoir accés aux fonctionnalités les plus intéressantes et représentatives de la réalité.
+
+### Technologies Utilisées
+
+- React : Framework pour la construction de l'interface utilisateur.
+- Material-UI (MUI) : Bibliothèque de composants pour un design moderne.
+- Axios : Client HTTP pour interagir avec l'API Javalin.
+- ABAC/RBAC : Gestion des droits d'accès utilisateurs.
+- Cookies : Stockage des sessions utilisateurs pour maintenir l'état.
+
+## Faire fonctionner le projet dans son entiereté
+
+Pour faire fonctionner toutes les étapes du projet, procédez ainsi :
+
+```
+// Construire les images (si nécessaire)
+docker build -t static-web:latest ./static-website
+docker build -t api-server:latest ./api-server
+docker build -t react-frontend:latest ./react-frontend 
+
+docker swarm init
+docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
+```
+
+- Site web statique : https://static-website.localhost
+- API : https://localhost/api
+- Frontend connecté à l'api : https://localhost
+- Dashboard Traefik : https://localhost:8080
+- Portainer : http://localhost:9000
+
