@@ -146,7 +146,7 @@ labels:
 - "traefik.http.routers.static.entrypoints=web"
 - "traefik.http.services.static.loadbalancer.server.port=80"
 ```
-Cela signifie que toutes les requêtes visant http://localhost seront redirigées vers le conteneur static-web, qui écoute en interne sur le port 80.
+Cela signifie que toutes les requêtes visant http://static-website.localhost seront redirigées vers le conteneur static-web, qui écoute en interne sur le port 80.
 
 
 #### Pour l’API (api-server) :
