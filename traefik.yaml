@@ -1,0 +1,19 @@
+api:
+  dashboard: true           # Active le dashboard, mais non exposé par défaut sur 8080
+
+entryPoints:
+  web:
+    address: ":80"          # Entrée HTTP
+  websecure:
+    address: ":443"         # Entrée HTTPS
+  dashboard:
+    address: ":8080"        # Entrée HTTPS pour le dashboard
+
+providers:
+  docker:
+    exposedByDefault: false # Seuls les conteneurs avec traefik.enable=true sont exposés
+
+tls:
+  certificates:
+    - certFile: "/etc/traefik/certificates/server.crt" # Chemin vers le certificat
+      keyFile:  "/etc/traefik/certificates/server.key" # Chemin vers la clé privée
