@@ -77,6 +77,90 @@ docker-compose build
 
 ## Etape 3: API Serveur HTTP
 
+Pour cette étape, nous avons développé une API REST complète en Java avec le framework Javalin, connectée à une base de données PostgreSQL. Cette API fait partie d'une application de suivi diététique permettant la gestion des patients, des diététiciens, des repas et des données de santé. La base de données stocke toutes les informations nécessaires au suivi nutritionnel des patients.
+
+### Architecture et implémentation
+
+Notre API est structurée selon une architecture MVC (Modèle-Vue-Contrôleur) et comprend :
+
+- **Contrôleurs** : Gèrent les routes et les requêtes HTTP
+  - Routes authentifiées (nécessitant une connexion)
+  - Routes non authentifiées (publiques)
+- **Services** : Contiennent la logique métier
+- **Modèles** : Représentent les entités de données
+- **DAO** : Gèrent l'accès aux données
+
+### Base de données PostgreSQL
+
+La base de données est structurée autour d'un schéma `suivi_dietetique` qui comprend :
+- Tables principales : `personne`, `employe`, `patient`, `dieteticien`, `infirmier`
+- Tables de gestion : `service`, `consommable`, `repas`, `donnee_sante`
+- Types énumérés personnalisés pour la gestion des rôles, statuts et types divers
+- Vues et triggers pour maintenir l'intégrité des données
+
+L'initialisation de la base de données est automatisée via des scripts SQL qui :
+1. Créent les tables et les contraintes
+2. Mettent en place les vues et les triggers
+3. Insèrent les données initiales de test
+
+La configuration Docker de la base de données utilise l'image `bitnami/postgresql:17` avec la configuration suivante :
+```yaml
+postgresql:
+    image: 'bitnami/postgresql:17'
+    environment:
+      - POSTGRESQL_USERNAME=bdr
+      - POSTGRESQL_PASSWORD=bdr
+      - POSTGRESQL_DATABASE=bdr
+      - POSTGRESQL_POSTGRES_PASSWORD=root
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d    # Scripts d'initialisation
+    ports:
+      - "5432:5432"                                   # Port PostgreSQL
+```
+
+Cette configuration :
+- Crée une base de données nommée `bdr`
+- Configure un utilisateur avec les accès nécessaires
+- Monte automatiquement les scripts d'initialisation
+- Expose le port standard de PostgreSQL
+
+### Points d'accès principaux
+
+L'API expose plusieurs endpoints REST pour gérer :
+- L'authentification des utilisateurs (`/api/login`, `/api/logout`)
+- Les patients et leurs données de santé
+- Les diététiciens et leurs suivis
+- Les repas et les consommables
+- Les allergènes et restrictions alimentaires
+
+### Configuration Docker
+
+Le `Dockerfile` pour l'API est configuré comme suit :
+```yaml
+FROM openjdk:21-jdk-slim
+WORKDIR /app
+COPY target/*with-dependencies.jar app.jar
+EXPOSE 80
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+### Sécurité et Authentification
+
+L'API implémente un système de sécurité complet avec :
+- Gestion des sessions utilisateur
+- Différents niveaux d'accès en fonction du role (ADMIN, PATIENT, DIETETICIEN)
+- Protection des routes sensibles
+- Hachage des mots de passe
+
+### Validation
+
+Pour tester l'API :
+1. Construire l'image Docker : `docker build -t api-server .`
+2. Lancer le conteneur : `docker run -p 80:80 api-server`
+3. Accéder à l'API via `http://localhost:80/api`
+4. Tester les endpoints avec un client HTTP (comme Postman)
+
+---
 
 ## Etape 4: Proxy inverse (Traefik)
 
@@ -195,7 +279,7 @@ Ce tableau de bord permet de :
 
 ---
 
-## Étape 5 : Scalabilité et Load Balancing
+## Etape 5 : Scalabilité et Load Balancing
 
 L'objectif de cette étape est de permettre la scalabilité de l'infrastructure en déployant plusieurs instances de chaque service (site statique et API) et de s'assurer que le proxy inverse **Traefik** effectue correctement l'équilibrage de charge (load balancing) entre ces instances.
 
@@ -337,7 +421,7 @@ Grâce à cette configuration, notre infrastructure est désormais scalable et u
 
 --- 
 
-## Étape 6 : Load balancing avec round-robin et sticky sessions
+## Etape 6 : Load balancing avec round-robin et sticky sessions
 ### Objectifs
 L'objectif de cette étape est de configurer Traefik pour :
 
@@ -703,3 +787,5 @@ docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
 - Frontend connecté à l'api : https://localhost
 - Dashboard Traefik : https://localhost:8080
 - Portainer : http://localhost:9000
+
+```
