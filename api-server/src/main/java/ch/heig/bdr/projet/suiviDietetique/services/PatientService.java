@@ -43,4 +43,8 @@ public class PatientService {
         patientDAO.updatePatient(patient, noss);
     }
 
+    public boolean deleteOnePatient(String noss){
+         return patientDAO.deletePatient(noss);
+    }
+
 }

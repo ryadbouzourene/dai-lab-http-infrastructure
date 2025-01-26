@@ -366,5 +366,20 @@ public class PatientDAO {
         }
     }
 
+    public boolean deletePatient(String noss) {
+        try (Connection connection = Database.getConnection()) {
+            // Vérifie que la personne est un patient avant de la supprimer
+            String query = "DELETE FROM personne WHERE noss = ? AND noss IN (SELECT noss FROM patient)";
+            try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                stmt.setInt(1, Integer.parseInt(noss));
+    
+                int rowsAffected = stmt.executeUpdate();
+                return rowsAffected > 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
 
 }
