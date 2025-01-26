@@ -703,4 +703,3 @@ docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
 - Frontend connecté à l'api : https://localhost
 - Dashboard Traefik : https://localhost:8080
 - Portainer : http://localhost:9000
-
