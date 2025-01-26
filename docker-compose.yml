@@ -132,13 +132,11 @@ services:
   # ========================
   portainer:
     image: portainer/portainer-ce:latest
-    container_name: portainer
     ports:
       - "9000:9000"                       # Expose le port HTTP
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Permet à Portainer de communiquer avec Docker via le socket local
       - portainer_data:/data                       # Volume pour stocker les données internes de Portainer
-    restart: unless-stopped                        # Redémarre automatiquement sauf si manuellement arrêté
     networks:
       - bdr-net                                    # Utilise le même réseau que les autres services
 

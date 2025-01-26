@@ -1,6 +1,8 @@
 # Rapport DAI
 ### Auteurs : Ryad Bouzourène, Anthony Christen, Louis Haye
 
+---
+
 ## Etape 1: Site web statique
 
 Pour cette partie, nous avons utilisé un template de site Web statique nommé Medi-Plus. Ce template a été récupéré gratuitement sur une plateforme de partage de templates tels que Free-CSS. Il s'agit d'un site à page unique avec un design attractif, adapté à des sites médicaux ou similaires.
@@ -35,6 +37,8 @@ Nous avons organisé le projet comme suit :
 ### Validation
 
 Nous avons construit et lancé l'image Docker. Une fois en cours d'exécution, le serveur est accessible via un navigateur à l'adresse `http://localhost:NUMPORT`.
+
+---
 
 ## Etape 2: Docker Compose
 
@@ -168,11 +172,10 @@ Pour améliorer la gestion et la sécurité de notre infrastructure Docker, nous
 (reverse proxy) à l'aide de **Traefik**. Voici les explications concernant son implémentation, son utilité,
 la manière d’y accéder et son fonctionnement.
 
----
 
 ### 1. Implémentation de la solution et configuration
 
-#### 1.1. Utilisation de Traefik comme proxy inverse
+#### Utilisation de Traefik comme proxy inverse
  
 Dans le fichier `docker-compose.yml`, nous avons ajouté un service nommé `reverse_proxy` 
 (basé sur l’image `traefik:v3.3`).
@@ -218,7 +221,7 @@ et ainsi de découvrir automatiquement les services.
 `networks` :
 Nous utilisons un réseau Docker `bdr-net` pour permettre la communication interne entre Traefik et les autres conteneurs.
 
-#### 1.2. Routage pour le site statique et l’API
+#### Routage pour le site statique et l’API
 Dans les services static-web (site statique) et api-server (API), nous avons ajouté des labels Traefik. Ces labels indiquent à Traefik comment router le trafic vers le bon conteneur :
 
 #### Pour le site statique (static-web) :
@@ -283,7 +286,7 @@ Ce tableau de bord permet de :
 
 L'objectif de cette étape est de permettre la scalabilité de l'infrastructure en déployant plusieurs instances de chaque service (site statique et API) et de s'assurer que le proxy inverse **Traefik** effectue correctement l'équilibrage de charge (load balancing) entre ces instances.
 
----
+
 
 ### Configuration pour plusieurs instances d'un même service
 
@@ -329,6 +332,7 @@ docker swarm init
   ```
   Si Swarm est activé, la section **Swarm** affichera "active".
 
+
 - **Désactiver le mode Swarm** (si nécessaire) :
   ```bash
   docker swarm leave --force
@@ -337,17 +341,22 @@ docker swarm init
 #### 3. Déployer l'infrastructure avec plusieurs instances
 
 Une fois le mode Swarm activé, déployez les services définis dans `docker-compose.yml` :
-```bash
-docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
-```
+  ```bash
+  docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
+  ```
 - `<nom_de_stack>` : Nom de l'ensemble des services (par exemple, `my_stack`).
+
 
 Pour vérifier que les services sont bien déployés et que toutes les instances sont actives :
 ```bash
 docker service ls
 ```
+Pour supprimer la pile de services : 
+```bash
+docker stack rm <nom_de_stack>
+```
 
----
+
 
 ### Ajuster dynamiquement le nombre d'instances d'un service
 
@@ -356,8 +365,6 @@ utilisez la commande suivante :
 ```bash
 docker service scale <nom_du_service>=<X>
 ```
-
-#### Paramètres :
 - **`<nom_du_service>`** : Nom du service à mettre à jour (par exemple, `my_stack_static-web`).
 - **`<X>`** : Nombre d'instances souhaitées.
 
@@ -369,7 +376,6 @@ docker service scale <nom_du_service>=<X>
 - Vous pouvez également consulter le tableau de bord de Traefik dans l'onglet **HTTP Services** pour voir le nombre
 d'instances actives dans la colonne "Servers".
 
----
 
 ### Vérification du Load Balancing
 
@@ -394,26 +400,10 @@ done
 ```
 
 - **Pourquoi ajouter `?unique=$RANDOM` ?**  
-  Cela permet de contourner le cache en générant une requête unique à chaque itération.
+  Cela permet de contourner le cache géré par Traefik en générant une requête unique à chaque itération.
 
 #### Résultat attendu :
 Dans la console des logs, vous verrez que les requêtes sont distribuées entre les différentes instances. Chaque instance traite certaines requêtes, prouvant que **Traefik effectue correctement l'équilibrage de charge**.
-
----
-
-### Résumé des commandes essentielles
-
-| Action                                    | Commande                                                                                                |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| Construire les images Docker             | `docker build -t static-web:latest ./static-website`<br>`docker build -t api-server:latest ./api-server` |
-| Activer Docker Swarm                     | `docker swarm init`                                                                                     |
-| Déployer les services avec Docker Stack  | `docker stack deploy --compose-file docker-compose.yml my_stack`                                       |
-| Vérifier les services actifs             | `docker service ls`                                                                                     |
-| Ajuster dynamiquement les réplicas       | `docker service scale my_stack_static-web=5`                                                           |
-| Observer les logs                        | `docker service logs my_stack_static-web --follow`                                                     |
-| Tester l'équilibrage avec des requêtes   | `for i in {1..10}; do curl -s "http://static-webiste.localhost?unique=$RANDOM"; done`                                 |
-
----
 
 ### Conclusion
 
@@ -427,8 +417,10 @@ L'objectif de cette étape est de configurer Traefik pour :
 
 - Utiliser le round-robin pour le site statique.
 - Activer les sticky sessions pour l'API dynamique.
+
+
 Les **sticky sessions** permettent d'associer un utilisateur ou une session spécifique à une instance particulière d'un 
-- service. Cela signifie que toutes les requêtes provenant du même utilisateur sont toujours envoyées à la même instance.
+service. Cela signifie que toutes les requêtes provenant du même utilisateur sont toujours envoyées à la même instance.
 
 Ce mécanisme est essentiel pour les applications **stateful** (avec état), comme notre API, qui gèrent des 
 sessions utilisateurs ou des connexions à une base de données. Dans le cas présent, Traefik utilise un cookie 
@@ -472,7 +464,7 @@ api-server:
 En envoyant plusieurs requêtes à http://static-webiste.localhost, nous avons constaté que les réponses proviennent de différentes
 instances du site statique (voir étape 5: Scalabilité et Load balancing).
 
-Résultat attendu : Les réponses montrent une distribution équitable entre les instances.
+**Résultat attendu** : Les réponses montrent une distribution équitable entre les instances.
 
 #### Sticky sessions pour l'API :
 
@@ -503,9 +495,8 @@ acheminées vers la même instance.
 Dans cette étape, nous avons configuré **Traefik** pour communiquer en HTTPS avec les clients (navigateurs), tout en conservant une communication interne en HTTP entre le proxy et les services (site statique et API).
 L’objectif est de **chiffrer** toutes les connexions provenant de l’extérieur, même si le certificat utilisé est **autosigné** (self-signed).
 
----
 
-### 1. Génération d’un certificat autosigné
+### Génération d’un certificat autosigné
 Ne pouvant pas (dans notre cas) utiliser des certificats publics (ex. Let’s Encrypt), nous avons généré un certificat autosigné. Pour cela, nous avons utilisé la commande openssl :
 
 ```bash
@@ -520,8 +511,8 @@ openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
 
 Ces deux fichiers sont montés dans le conteneur Traefik pour lui permettre de gérer TLS.
 
-### 2. Configuration de Traefik
-#### 2.1. Fichier traefik.yaml
+### Configuration de Traefik
+#### Fichier traefik.yaml
 Pour activer TLS, nous avons ajouté un bloc tls pointant vers le dossier contenant server.crt et server.key. Voici un extrait :
 
 ```yaml
@@ -545,11 +536,11 @@ tls:
     - certFile: "/etc/traefik/certificates/server.crt"
       keyFile:  "/etc/traefik/certificates/server.key"
 ```
-- entryPoints.websecure : Définit l’écoute HTTPS sur le port :443.
-- tls: : Localise les certificats chargés par Traefik.
-- dashboard: : Gère un entrypoint dédié au dashboard en HTTPS (port 8080).
+- `entryPoints.websecure` : Définit l’écoute HTTPS sur le port :443.
+- `tls` : Localise les certificats chargés par Traefik.
+- `dashboard` : Gère un entrypoint dédié au dashboard en HTTPS (port 8080).
 
-#### 2.2. Labels Docker pour activer HTTPS
+#### Labels Docker pour activer HTTPS
 Dans le docker-compose.yml, nous avons ajouté des labels pour chaque service (site statique et API) afin d’activer l’entrée HTTPS :
 
 ```yaml
@@ -601,16 +592,16 @@ De cette façon, on peut accéder au dashboard via https://localhost:8080.
 
 Le certificat autosigné générera un avertissement de sécurité que l’on peut ignorer.
 
-### 4. Tests et validation
-#### 4.1. Connexion HTTPS au site statique et à l’API
-- Site statique :
+### Tests et validation
+#### Connexion HTTPS au site statique et à l’API
+- **Site statique** :
 Accéder à https://static-webiste.localhost (ou le domaine/host configuré).
 Le navigateur indique « connexion non sécurisée » (puisqu’il s’agit d’un certificat autosigné), ce qui est normal.
 
-- API :
+- **API** :
 Vérifier les routes https://localhost/api/... pour confirmer que l’API répond en HTTPS.
 
-#### 4.2. Dashboard Traefik
+#### Dashboard Traefik
 En tapant https://localhost:8080, on obtient le dashboard, montrant les routers et services configurés.
 Cela permet de confirmer la bonne prise en charge de TLS et le routage correct.
 
@@ -627,7 +618,7 @@ Grâce à cette configuration :
 
 ## Etape optionnelle 1: Interface de gestion
 
-## Objectif
+### Objectif
 
 L’objectif de cette étape est de déployer une interface de gestion (Management UI) pour superviser et contrôler l’infrastructure Docker de manière dynamique. Cela inclut :
 - Lister les conteneurs en cours d’exécution.
@@ -637,11 +628,10 @@ L’objectif de cette étape est de déployer une interface de gestion (Manageme
 
 Nous avons choisi d’utiliser **Portainer**, une solution existante et robuste, pour répondre à ces besoins.
 
----
 
-## Configuration de Portainer
+### Configuration de Portainer
 
-### 1. Ajout de Portainer dans `docker-compose.yml`
+#### 1. Ajout de Portainer dans `docker-compose.yml`
 
 Voici la configuration ajoutée au fichier `docker-compose.yml`:
 
@@ -651,13 +641,11 @@ Voici la configuration ajoutée au fichier `docker-compose.yml`:
   # ========================
   portainer:
     image: portainer/portainer-ce:latest  # Utilise l'édition communautaire de Portainer
-    container_name: portainer             # Nom du conteneur pour faciliter l'identification
     ports:
       - "9000:9000"                       # Port exposé pour accéder à l'interface Web de Portainer
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Permet à Portainer de communiquer avec Docker via le socket local
       - portainer_data:/data                      # Volume pour stocker les données internes de Portainer
-    restart: unless-stopped                       # Redémarre automatiquement sauf si manuellement arrêté
     networks:
       - bdr-net                                   # Utilise le même réseau que les autres services
 
@@ -669,7 +657,7 @@ volumes:
 Lancer l'ensemble du Docker Compose:
 
 ```bash
-docker-compose up -d
+docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
 ```
 
 - Vérifier que le conteneur Portainer est en cours d’exécution:
@@ -684,40 +672,39 @@ Ouvrez un navigateur et rendez-vous sur http://localhost:9000.
 - Créer un compte administrateur
 
 - Connecter Portainer à l’environnement Docker local :
+  - Cliquez sur le bouton `Home` sur la gauche.
   - Sélectionnez Local comme environnement Docker.
-- Cliquez sur Connect pour terminer la configuration.
 
 ### 3. Utilisation de Portainer
 
-### Fonctionnalités principales
+#### Fonctionnalités principales
 
-1. **Lister les conteneurs** :
-    - Accédez à l’onglet **Containers** pour afficher tous les conteneurs présents sur l’hôte Docker, qu’ils soient en cours d’exécution ou arrêtés.
-    - Vous y trouverez :
-        - Le nom du conteneur.
-        - L’image utilisée.
-        - L’état du conteneur (Running, Stopped, Exited).
-        - Son adresse IP.
+1. **Lister les services** :
+    - Cliquez du l'onglet `Services`
+   
+   Vous y trouverez les informations concernants chaques services (nom, image, ports, nombre de répliques, etc...).
       
 
 2. **Démarrer ou arrêter un conteneur** :
-    - Cliquez sur le bouton **Start** pour démarrer un conteneur arrêté.
-    - Cliquez sur **Stop** pour arrêter un conteneur en cours d’exécution.
+   - Allez dans la section `Containers`.
+   - Cliquez sur la coche à côté du conteneur que vous souhaitez démarrer / arrêter.
+   - Cliquez sur le bouton `Start` pour démarrer un conteneur arrêté.
+   - Cliquez sur `Stop` pour arrêter un conteneur en cours d’exécution.
 
 
-3. **Supprimer une instance (un conteneur)** :
-    - Cliquez sur **Remove** à côté du conteneur que vous souhaitez supprimer.
+3. **Supprimer un conteneur** :
+    - Allez dans la section `Containers`.
+    - Cliquez sur la coche à côté du conteneur que vous souhaitez supprimer.
+    - Cliquez sur `Remove` à côté du conteneur que vous souhaitez supprimer.
+
+    (Même chose dans la section `Service` si vous voulez supprimer un service).
 
 
-4. **Dupliquer une instance (un conteneur)** :
-    - Cliquez sur le conteneur que vous souhaitez dupliquer.
-    - Cliquez sur `Duplicate/Edit`.
-    - Saisissez un nom pour ce conteneur (qui n'entre en conflit avec ceux déjà existants).
-    - Désactivez les champs ci-dessous :
-    ![dup1](./README-images/duplicate_container1.png)
-    - Dans la fenêtre plus bas, changez l'adresse IPv4 avec une non-utilisée :
-    ![dup2](./README-images/duplicate_container2.png)
-    - Cliquer sur `Deploy the container`
+4. **Ajuster le nombre de répliques d'un service** :
+    - Allez dans la section `Services`.
+    - Sur la ligne du service auquel vous voulez modifier le nombre de répliques, cliquez sur le bouton `Scale`.
+    - Entrez le nombre de répliques souhaité.
+    - Cliquez sur le bouton sur la droite pour appliquer le changement.
 
 
 5. **Superviser les logs des conteneurs** :
@@ -725,10 +712,12 @@ Ouvrez un navigateur et rendez-vous sur http://localhost:9000.
 
 ### 4. Conclusion
 - Portainer a été déployé et configuré avec succès, offrant une interface intuitive pour gérer l’infrastructure Docker.
-- Les conteneurs peuvent être listés, démarrés/arrêtés, dupliqués, ou supprimés via l’interface.
+- Les conteneurs/instances peuvent être listés, démarrés/arrêtés, dupliqués, ou supprimés via l’interface.
 - Des instances dans Docker Compose peuvent être déployées et mises à jour dynamiquement.
 
-## Etape optionnelle 2: Integration API - static Web site
+---
+
+## Etape optionnelle 2: Integration API - Static Web site
 
 ### Objectif
 
@@ -738,12 +727,16 @@ L'objectif de cette section est de connecter un frontend à notre API afin d'eff
 
 Le frontend est une application React permettant à trois types d'utilisateurs de se connecter et d'accéder aux fonctionnalités spécifiques à leurs rôles. Les utilisateurs peuvent se connecter via l'URL suivante :
 
-- URL de connexion : https://localhost
-- Identifiants de test :
-  - `Admin` : admin@test.com, mot de passe : pwd
-  - `Diététicien` : dieteticen@test.com, mot de passe : pwd
-  - `Infirmier` : infirmier@test.com, mot de passe : pwd
-  - `Patient` : patient@test.com, mot de passe : pwd
+- **URL de connexion** : https://localhost
+- **Identifiants de test** :
+
+| Rôle        | Email               | Mot de passe |
+|-------------|---------------------|--------------|
+| Admin       | admin@test.com      | pwd          |
+| Diététicien | dieteticen@test.com | pwd          |
+| Infirmier   | infirmier@test.com  | pwd          |
+| Patient     | patient@test.com    | pwd          |
+
 
 Différentes opérations peuvent être réalisées selon son rôle dans le but de suivre l'évolution diététique de patients. Il est par exemple possible d'effectuer les actions suivantes :
 
@@ -758,22 +751,22 @@ Différentes opérations peuvent être réalisées selon son rôle dans le but d
 - Avoir accès aux repas d'un patient sur une période donnée (un jour, une semaine, un mois, une année, tout) et visualiser des statistiques sur l'évolution des apports nutritionnels.
 - Consulter l'historique des données de santé d'un patient et des statistiques.
 
-Nous vous recommandons de vous conncter avec le rôle de `Diététicien` ou celui de `Patient` pour avoir accés aux fonctionnalités les plus intéressantes et représentatives de la réalité.
+Nous vous recommandons de vous connecter avec le rôle de `Diététicien` ou celui de `Patient` pour avoir accés aux fonctionnalités les plus intéressantes et représentatives de la réalité.
 
-### Technologies Utilisées
+### Technologies utilisées
 
-- React : Framework pour la construction de l'interface utilisateur.
-- Material-UI (MUI) : Bibliothèque de composants pour un design moderne.
-- Axios : Client HTTP pour interagir avec l'API Javalin.
-- ABAC/RBAC : Gestion des droits d'accès utilisateurs.
-- Cookies : Stockage des sessions utilisateurs pour maintenir l'état.
+- **React** : Framework pour la construction de l'interface utilisateur.
+- **Material-UI (MUI)** : Bibliothèque de composants pour un design moderne.
+- **Axios** : Client HTTP pour interagir avec l'API Javalin.
+- **ABAC/RBAC** : Gestion des droits d'accès utilisateurs.
+- **Cookies** : Stockage des sessions utilisateurs pour maintenir l'état.
 
-## Faire fonctionner le projet dans son entiereté
+## Faire fonctionner le projet dans son entièreté
 
-Pour faire fonctionner toutes les étapes du projet, procédez ainsi :
+Pour faire fonctionner toutes les étapes du projet, éxécutez ces commandes :
 
-```
-// Construire les images (si nécessaire)
+```bash
+# Construire les images (si nécessaire)
 docker build -t static-web:latest ./static-website
 docker build -t api-server:latest ./api-server
 docker build -t react-frontend:latest ./react-frontend 
@@ -781,11 +774,27 @@ docker build -t react-frontend:latest ./react-frontend
 docker swarm init
 docker stack deploy --compose-file docker-compose.yml <nom_de_stack>
 ```
+> [!IMPORTANT]
+> Changez le champs `<nom_de_stack>` par le nom que vous souhaitez donner à la stack
 
-- Site web statique : https://static-website.localhost
-- API : https://localhost/api
-- Frontend connecté à l'api : https://localhost
-- Dashboard Traefik : https://localhost:8080
-- Portainer : http://localhost:9000
+## Résumé des commandes principales
 
-```
+| Action                                  | Commande                                                                                                                                                               |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Construire les images Docker            | `docker build -t static-web:latest ./static-website`<br>`docker build -t api-server:latest ./api-server` <br> `docker build -t react-frontend:latest ./react-frontend` |
+| Activer Docker Swarm                    | `docker swarm init`                                                                                                                                                    |
+| Déployer les services avec Docker Stack | `docker stack deploy --compose-file docker-compose.yml <nom_de_stack>`                                                                                                 |
+| Vérifier les services actifs            | `docker service ls`                                                                                                                                                    |
+| Ajuster dynamiquement les réplicas      | `docker service scale <nom_de_stack>_<nom_du_service>=<X>`                                                                                                             |
+| Arrêter la stack                        | `docker stack rm <nom_de_stack>`                                                                                                                                       |
+| Arrêter le mode Swarm                   | `docker swarm leave --force`                                                                                                                                           |
+
+
+| Site                        | URL                              |
+|-----------------------------|----------------------------------|
+| Site web statique           | https://static-website.localhost |
+| API                         | https://localhost/api            |
+| Frontend connecté à l'api   | https://localhost                |
+| Dashboard Traefik           | https://localhost:8080           |
+| Portainer                   | http://localhost:9000            |
+
