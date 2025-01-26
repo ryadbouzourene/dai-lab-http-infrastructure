@@ -417,8 +417,10 @@ L'objectif de cette étape est de configurer Traefik pour :
 
 - Utiliser le round-robin pour le site statique.
 - Activer les sticky sessions pour l'API dynamique.
+
+
 Les **sticky sessions** permettent d'associer un utilisateur ou une session spécifique à une instance particulière d'un 
-- service. Cela signifie que toutes les requêtes provenant du même utilisateur sont toujours envoyées à la même instance.
+service. Cela signifie que toutes les requêtes provenant du même utilisateur sont toujours envoyées à la même instance.
 
 Ce mécanisme est essentiel pour les applications **stateful** (avec état), comme notre API, qui gèrent des 
 sessions utilisateurs ou des connexions à une base de données. Dans le cas présent, Traefik utilise un cookie 
