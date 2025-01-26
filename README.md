@@ -385,7 +385,7 @@ api-server:
 ### Vérification des fonctionnalités
 #### Round-robin pour le site statique :
 
-En envoyant plusieurs requêtes à http://localhost, nous avons constaté que les réponses proviennent de différentes
+En envoyant plusieurs requêtes à http://static-webiste.localhost, nous avons constaté que les réponses proviennent de différentes
 instances du site statique (voir étape 5: Scalabilité et Load balancing).
 
 Résultat attendu : Les réponses montrent une distribution équitable entre les instances.
@@ -520,7 +520,7 @@ Le certificat autosigné générera un avertissement de sécurité que l’on pe
 ### 4. Tests et validation
 #### 4.1. Connexion HTTPS au site statique et à l’API
 - Site statique :
-Accéder à https://localhost (ou le domaine/host configuré).
+Accéder à https://static-webiste.localhost (ou le domaine/host configuré).
 Le navigateur indique « connexion non sécurisée » (puisqu’il s’agit d’un certificat autosigné), ce qui est normal.
 
 - API :
