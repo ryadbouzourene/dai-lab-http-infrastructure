@@ -48,7 +48,5 @@ public class AuthRoutesController {
         // Enregistrement des routes pour la gestion des données de santé
         DonneeSanteController.registerRoutes(app);
 
-        // Enregistrement des routes pour la gestion des personnes
-        PersonneController.registerRoutes(app);
     }
 }
