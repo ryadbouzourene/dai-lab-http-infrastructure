@@ -43,7 +43,7 @@ services:
       - "traefik.enable=true"          # Expose ce service via Traefik
 
       # Routage HTTP
-      - "traefik.http.routers.static.rule=Host(`localhost`)"
+      - "traefik.http.routers.static.rule=Host(`static-website.localhost`)"
       - "traefik.http.routers.static.entrypoints=web"
 
       # Routage HTTPS
@@ -52,6 +52,31 @@ services:
 
       # Définit le port interne du conteneur écouté par Traefik
       - "traefik.http.services.static.loadbalancer.server.port=80"
+
+  # ========================
+  # Frontend app diététique
+  # ========================
+  react-frontend:
+    image: react-frontend:latest
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    networks:
+      - bdr-net
+    labels:
+      - "traefik.enable=true"
+
+      # Routage HTTP
+      - "traefik.http.routers.front.rule=Host(`localhost`)"
+      - "traefik.http.routers.front.entrypoints=web"
+
+      # Routage HTTPS
+      - "traefik.http.routers.front.tls=true"
+      - "traefik.http.routers.front.entrypoints=websecure"
+
+      # Port interne du conteneur (port Nginx)
+      - "traefik.http.services.front.loadbalancer.server.port=80"
 
   # ========================
   # Serveur API
