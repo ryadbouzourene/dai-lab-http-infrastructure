@@ -538,3 +538,108 @@ Grâce à cette configuration :
 - Le dashboard est lui aussi disponible en HTTPS, évitant le mode insecure par défaut.
 - Les services (site statique et API) continuent de communiquer en HTTP à l’intérieur du réseau Docker.
 - Cette approche garantit la sécurisation des échanges entre les utilisateurs et nos services, répondant ainsi à l’objectif de chiffrement des données en transit.
+
+---
+
+## Etape optionnelle 1: Interface de gestion
+
+## Objectif
+
+L’objectif de cette étape est de déployer une interface de gestion (Management UI) pour superviser et contrôler l’infrastructure Docker de manière dynamique. Cela inclut :
+- Lister les conteneurs en cours d’exécution.
+- Démarrer/arrêter des conteneurs.
+- Ajouter ou supprimer des instances.
+- Superviser les logs et les ressources.
+
+Nous avons choisi d’utiliser **Portainer**, une solution existante et robuste, pour répondre à ces besoins.
+
+---
+
+## Configuration de Portainer
+
+### 1. Ajout de Portainer dans `docker-compose.yml`
+
+Voici la configuration ajoutée au fichier `docker-compose.yml`:
+
+```yaml
+  # ========================
+  # Portainer (Management UI)
+  # ========================
+  portainer:
+    image: portainer/portainer-ce:latest  # Utilise l'édition communautaire de Portainer
+    container_name: portainer             # Nom du conteneur pour faciliter l'identification
+    ports:
+      - "9000:9000"                       # Port exposé pour accéder à l'interface Web de Portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Permet à Portainer de communiquer avec Docker via le socket local
+      - portainer_data:/data                      # Volume pour stocker les données internes de Portainer
+    restart: unless-stopped                       # Redémarre automatiquement sauf si manuellement arrêté
+    networks:
+      - bdr-net                                   # Utilise le même réseau que les autres services
+
+volumes:
+  portainer_data:  # Volume nommé pour stocker les données de Portainer
+```
+### 2. Déploiement et accès à Portainer
+#### 2.1. Déploiement
+Lancer l'ensemble du Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+- Vérifier que le conteneur Portainer est en cours d’exécution:
+```bash
+docker ps
+```
+#### 2.2. Accéder à l’interface Web de Portainer:
+Ouvrez un navigateur et rendez-vous sur http://localhost:9000.
+
+
+#### 2.3. Configuration initiale
+- Créer un compte administrateur
+
+- Connecter Portainer à l’environnement Docker local :
+  - Sélectionnez Local comme environnement Docker.
+- Cliquez sur Connect pour terminer la configuration.
+
+### 3. Utilisation de Portainer
+
+### Fonctionnalités principales
+
+1. **Lister les conteneurs** :
+    - Accédez à l’onglet **Containers** pour afficher tous les conteneurs présents sur l’hôte Docker, qu’ils soient en cours d’exécution ou arrêtés.
+    - Vous y trouverez :
+        - Le nom du conteneur.
+        - L’image utilisée.
+        - L’état du conteneur (Running, Stopped, Exited).
+        - Son adresse IP.
+      
+
+2. **Démarrer ou arrêter un conteneur** :
+    - Cliquez sur le bouton **Start** pour démarrer un conteneur arrêté.
+    - Cliquez sur **Stop** pour arrêter un conteneur en cours d’exécution.
+
+
+3. **Supprimer une instance (un conteneur)** :
+    - Cliquez sur **Remove** à côté du conteneur que vous souhaitez supprimer.
+
+
+4. **Dupliquer une instance (un conteneur)** :
+    - Cliquez sur le conteneur que vous souhaitez dupliquer.
+    - Cliquez sur `Duplicate/Edit`.
+    - Saisissez un nom pour ce conteneur (qui n'entre en conflit avec ceux déjà existants).
+    - Désactivez les champs ci-dessous :
+    ![dup1](./README-images/duplicate_container1.png)
+    - Dans la fenêtre plus bas, changez l'adresse IPv4 avec une non-utilisée :
+    ![dup2](./README-images/duplicate_container2.png)
+    - Cliquer sur `Deploy the container`
+
+
+5. **Superviser les logs des conteneurs** :
+    - Sélectionnez un conteneur, puis cliquez sur l’onglet **Logs** pour visualiser les journaux en temps réel.
+
+### 4. Conclusion
+- Portainer a été déployé et configuré avec succès, offrant une interface intuitive pour gérer l’infrastructure Docker.
+- Les conteneurs peuvent être listés, démarrés/arrêtés, dupliqués, ou supprimés via l’interface.
+- Des instances dans Docker Compose peuvent être déployées et mises à jour dynamiquement.
