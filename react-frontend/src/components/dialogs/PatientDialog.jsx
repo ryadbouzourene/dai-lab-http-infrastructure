@@ -21,9 +21,11 @@ import dieteticienService from '../../services/dieteticienService';
 import consommableService from '../../services/consommableService';
 
 function PatientDialog({ open, handleClose, patientData, onSave }) {
+  const [noss, setNoss] = useState(patientData ? patientData.noSS : '');
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [dateNaissance, setDateNaissance] = useState('');
+  const [dateAdmission, setDateAdmission] = useState(null);
   const [sexe, setSexe] = useState('');
   const [email, setEmail] = useState('');
   const [dieteticien, setDieteticien] = useState('');
@@ -59,7 +61,8 @@ function PatientDialog({ open, handleClose, patientData, onSave }) {
       setNom(patientData.nom || '');
       setPrenom(patientData.prenom || '');
       setDateNaissance(patientData.dateNaissance || '');
-      setSexe(patientData.sexe || '');
+      setDateAdmission(patientData.dateAdmission || null);
+      setSexe(patientData.sexe.toUpperCase() || '');
       setEmail(patientData.email || '');
       setDieteticien(patientData.nossDieteticien || '');
     } else if (!open) {
@@ -67,6 +70,7 @@ function PatientDialog({ open, handleClose, patientData, onSave }) {
       setNom('');
       setPrenom('');
       setDateNaissance('');
+      setDateAdmission(null)
       setSexe('');
       setEmail('');
       setDieteticien('');
@@ -77,25 +81,27 @@ function PatientDialog({ open, handleClose, patientData, onSave }) {
 
   const handleSubmit = async () => {
     setError('');
-    if (!nom || !prenom || !dateNaissance || !sexe || !email) {
+    if (!nom || !prenom || !dateNaissance || !sexe) {
       setError('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
     const patientPayload = {
-      noSS: patientData?.noSS || null,
-      nom,
-      prenom,
-      dateNaissance,
-      sexe,
-      email,
-      dieteticien,
-      allergies
+      noSS: noss,
+      nom: nom,
+      prenom: prenom,
+      email: email,
+      dateNaissance: dateNaissance,
+      dateAdmission: dateAdmission,
+      sexe: sexe,
+      nossDieteticien: dieteticien,
+      allergenes: allergies
     };
 
     try {
       if (patientData) {
-        await patientService.updatePatient(patientPayload);
+        console.log(patientPayload);
+        await patientService.updatePatient(patientData.noSS, patientPayload);
       } else {
         await patientService.createPatient(patientPayload);
       }
@@ -113,14 +119,15 @@ function PatientDialog({ open, handleClose, patientData, onSave }) {
       <DialogContent>
         <Stack spacing={2}>
           {error && <Alert severity="error">{error}</Alert>}
-          {patientData && (
-            <TextField
-              label="Numéro de sécurité sociale"
-              value={patientData.noSS}
-              fullWidth
-              disabled
-            />
-          )}
+          
+          <TextField
+            label="Numéro de sécurité sociale"
+            value={noss}
+            onChange={(e) => setNoss(e.target.value)}
+            fullWidth
+            disabled={patientData != null || patientData != undefined}
+          />
+        
           <TextField
             label="Nom"
             value={nom}
@@ -147,8 +154,8 @@ function PatientDialog({ open, handleClose, patientData, onSave }) {
           <FormControl fullWidth required>
             <InputLabel>Sexe</InputLabel>
             <Select value={sexe} onChange={(e) => setSexe(e.target.value)}>
-              <MenuItem value="Homme">Homme</MenuItem>
-              <MenuItem value="Femme">Femme</MenuItem>
+              <MenuItem value="HOMME">Homme</MenuItem>
+              <MenuItem value="FEMME">Femme</MenuItem>
             </Select>
           </FormControl>
           <TextField
